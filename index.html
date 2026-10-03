@@ -59,6 +59,7 @@
     <button onclick="selectCategory('الشيخ سعد الغامدي')" id="filt_الشيخ سعد الغامدي" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">الشيخ سعد الغامدي</button>
     <button onclick="selectCategory('ابو مصعب')" id="filt_ابو مصعب" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">ابو مصعب</button>
     <button onclick="selectCategory('نايف الشرهان')" id="filt_نايف الشرهان" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">نايف الشرهان</button>
+    <button onclick="selectCategory('إدريس ابكر')" id="filt_إدريس ابكر" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">إدريس ابكر</button>
     <button onclick="selectCategory('أسامة')" id="filt_أسامة" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">أسامة</button>
    </div>
    <div class="flex gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 text-xs font-bold">
@@ -121,7 +122,9 @@
       { id: 4, title: "غرباء", artist: "الشيخ سعد الغامدي", category: "الشيخ سعد الغامدي", url: "https://files.catbox.moe/oqlcjd.mp3", duration: "--:--" },
       { id: 5, title: "رضيت بالدون", artist: "ابو مصعب", category: "ابو مصعب", url: "https://files.catbox.moe/9jqhc1.mp3", duration: "--:--" },
       { id: 6, title: "يالادمي", artist: "ابو مصعب", category: "ابو مصعب", url: "https://files.catbox.moe/rjlmfg.mp3", duration: "--:--" },
-      { id: 7, title: "الكاذبون على المدي", artist: "نايف الشرهان", category: "نايف الشرهان", url: "https://files.catbox.moe/dtpoc8.mp3", duration: "--:--" }
+      { id: 7, title: "الكاذبون على المدي", artist: "نايف الشرهان", category: "نايف الشرهان", url: "https://files.catbox.moe/dtpoc8.mp3", duration: "--:--" },
+      { id: 8, title: "عشق هنا", artist: "نايف الشرهان", category: "نايف الشرهان", url: "https://files.catbox.moe/037ern.mp3", duration: "--:--" },
+      { id: 9, title: "احببتها منذ الصغر", artist: "إدريس ابكر", category: "إدريس ابكر", url: "https://files.catbox.moe/95m7s8.mp3", duration: "--:--" }
     ];
 
     let currentUser = localStorage.getItem('current_user') || null;
@@ -189,7 +192,7 @@
 
     function selectCategory(cat) {
       selectedCategory = cat;
-      ['all', 'الشيخ سعد الغامدي', 'ابو مصعب', 'نايف الشرهان', 'أسامة'].forEach(c => {
+      ['all', 'الشيخ سعد الغامدي', 'ابو مصعب', 'نايف الشرهان', 'إدريس ابكر', 'أسامة'].forEach(c => {
         let b = document.getElementById('filt_' + c);
         if(b) b.className = (c === cat) ? "px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0" : "px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0";
       });
