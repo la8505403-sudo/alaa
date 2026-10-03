@@ -10,11 +10,14 @@
   <script>tailwind.config = { darkMode: 'class' }</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&amp;display=swap" rel="stylesheet">
-  <style>body { font-family: 'Tajawal', sans-serif; }</style>
+  <style>
+    body { font-family: 'Tajawal', sans-serif; }
+    #sleepModalBox { touch-action: none; }
+  </style>
  </head>
  <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24 select-none">
   <!-- نافذة تسجيل الدخول -->
-  <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="authModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl relative">
     <button onclick="closeAuthModal()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
     <div class="text-center space-y-1 pt-2">
@@ -34,10 +37,19 @@
    </div>
   </div>
 
-  <!-- نافذة مؤقت النوم -->
-  <div id="sleepModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl relative">
-    <div class="flex justify-between items-center"><h3 class="font-bold text-sm">مؤقت إيقاف التشغيل</h3><button onclick="closeSleepModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div>
+  <!-- نافذة مؤقت النوم (قابلة للسحب والقفل) -->
+  <div id="sleepModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden pointer-events-none">
+   <div id="sleepModalBox" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl relative pointer-events-auto cursor-grab active:cursor-grabbing">
+    <div class="flex justify-between items-center select-none" id="sleepModalHeader">
+     <div class="flex items-center gap-2">
+      <h3 class="font-bold text-sm">مؤقت إيقاف التشغيل</h3>
+      <span class="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">اسحب من هنا</span>
+     </div>
+     <div class="flex items-center gap-2">
+      <button id="lockSleepBtn" onclick="toggleLockSleepModal()" class="text-slate-400 hover:text-white p-1" title="قفل أو تحريك"><i class="fa-solid fa-lock-open text-xs"></i></button>
+      <button onclick="closeSleepModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
+     </div>
+    </div>
     <div class="grid grid-cols-2 gap-2 text-xs">
      <button onclick="setSleepTimer(15)" class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 transition-colors">15 دقيقة</button>
      <button onclick="setSleepTimer(30)" class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 transition-colors">30 دقيقة</button>
@@ -49,7 +61,7 @@
   </div>
 
   <!-- نافذة قائمة الانتظار -->
-  <div id="queueModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="queueModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-3 shadow-2xl relative max-h-[80vh] flex flex-col">
     <div class="flex justify-between items-center"><h3 class="font-bold text-sm">قائمة التشغيل التالية</h3><button onclick="closeQueueModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="queueList" class="overflow-y-auto space-y-2 flex-1 pr-1"></div>
@@ -113,7 +125,7 @@
 
   <div id="fullPlayer" class="fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 transition-transform duration-300 translate-y-full max-w-md mx-auto text-white">
    <div class="flex justify-between items-center pt-2">
-    <button onclick="openSleepModal()" class="text-slate-300 text-lg relative" title="مؤقت النوم"><i class="fa-solid fa-moon"></i><span id="sleepBadge" class="absolute -top-1 -right-2 text-[9px] bg-emerald-500 text-slate-950 px-1 rounded-full hidden">0</span></button>
+    <button onclick="openSleepModal()" class="text-slate-300 text-lg relative p-2" title="مؤقت النوم"><i class="fa-solid fa-clock"></i><span id="sleepBadge" class="absolute top-0 right-0 text-[9px] bg-emerald-500 text-slate-950 px-1 rounded-full hidden">0</span></button>
     <button onclick="closeFullPlayer()" class="text-2xl p-1"><i class="fa-solid fa-chevron-down"></i></button>
    </div>
    <div class="my-auto py-2 flex flex-col items-center w-full">
@@ -161,6 +173,7 @@
     let historyTracks = [];
     let sleepTimerInterval = null;
     let sleepTimeRemaining = 0;
+    let isSleepLocked = false;
 
     function loadUserData() {
       if (currentUser) {
@@ -205,8 +218,56 @@
 
     function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
     function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
-    function openSleepModal() { document.getElementById('sleepModal').classList.remove('hidden'); }
-    function closeSleepModal() { document.getElementById('sleepModal').classList.add('hidden'); }
+    
+    function openSleepModal() { 
+      let modal = document.getElementById('sleepModal');
+      modal.classList.remove('hidden'); 
+    }
+    function closeSleepModal() { 
+      document.getElementById('sleepModal').classList.add('hidden'); 
+    }
+
+    function toggleLockSleepModal() {
+      isSleepLocked = !isSleepLocked;
+      let btn = document.getElementById('lockSleepBtn');
+      let box = document.getElementById('sleepModalBox');
+      if (isSleepLocked) {
+        btn.innerHTML = '<i class="fa-solid fa-lock text-xs text-emerald-400"></i>';
+        btn.title = 'مقفل (اضغط للفتح)';
+        box.style.cursor = 'default';
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-lock-open text-xs"></i>';
+        btn.title = 'قفل أو تحريك';
+        box.style.cursor = 'grab';
+      }
+    }
+
+    // إعداد السحب والإفلات لنافذة المؤقت
+    const sleepBox = document.getElementById('sleepModalBox');
+    let isDragging = false, startX, startY, initialX = 0, initialY = 0;
+
+    sleepBox.addEventListener('pointerdown', (e) => {
+      if (isSleepLocked) return;
+      // منع السحب إذا تم الضغط على الأزرار الداخلية
+      if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+      isDragging = true;
+      startX = e.clientX - initialX;
+      startY = e.clientY - initialY;
+      sleepBox.setPointerCapture(e.pointerId);
+      sleepBox.style.cursor = 'grabbing';
+    });
+
+    sleepBox.addEventListener('pointermove', (e) => {
+      if (!isDragging || isSleepLocked) return;
+      initialX = e.clientX - startX;
+      initialY = e.clientY - startY;
+      sleepBox.style.transform = `translate(${initialX}px, ${initialY}px)`;
+    });
+
+    sleepBox.addEventListener('pointerup', (e) => {
+      isDragging = false;
+      if (!isSleepLocked) sleepBox.style.cursor = 'grab';
+    });
     
     function openQueueModal() {
       let list = document.getElementById('queueList');
