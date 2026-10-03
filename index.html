@@ -268,8 +268,14 @@
       document.getElementById('fullPlayIcon').className = c;
     }
 
-    function openFullPlayer() { document.getElementById('fullPlayer').classList.remove('translate-y-full'); }
-    function closeFullPlayer() { document.getElementById('fullPlayer').classList.add('translate-y-full'); }
+    function openFullPlayer() { 
+      document.getElementById('fullPlayer').classList.remove('translate-y-full'); 
+      history.pushState({playerOpen: true}, '');
+    }
+    
+    function closeFullPlayer() { 
+      document.getElementById('fullPlayer').classList.add('translate-y-full'); 
+    }
 
     function toggleFavorite(e, id) {
       if(e) e.stopPropagation();
@@ -314,6 +320,23 @@
     };
     function seekTrack() { audio.currentTime = (document.getElementById('progressBar').value / 100) * audio.duration; }
     function fmt(sec) { return Math.floor(sec/60) + ":" + (Math.floor(sec%60)<10?'0':'') + Math.floor(sec%60); }
+
+    // التحكم بزر الرجوع في الهاتف لمنع الخروج السريع
+    history.pushState(null, '', location.href);
+    window.addEventListener('popstate', function (event) {
+      let fullPlayer = document.getElementById('fullPlayer');
+      let authModal = document.getElementById('authModal');
+      
+      if (!authModal.classList.contains('hidden')) {
+        closeAuthModal();
+        history.pushState(null, '', location.href);
+      } else if (!fullPlayer.classList.contains('translate-y-full')) {
+        closeFullPlayer();
+        history.pushState(null, '', location.href);
+      } else {
+        history.pushState(null, '', location.href);
+      }
+    });
 
     renderTracks();
   </script>
