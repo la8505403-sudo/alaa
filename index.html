@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" dir="rtl" class="dark">
+<html lang="ar" dir="rtl">
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +7,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>منصة الأناشيد</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    if (localStorage.getItem('site_theme') === 'dark' || (!localStorage.getItem('site_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
   <script>tailwind.config = { darkMode: 'class' }</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&amp;display=swap" rel="stylesheet">
@@ -15,7 +22,7 @@
     #sleepModalBox { touch-action: none; }
   </style>
  </head>
- <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24 select-none">
+ <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-28 select-none">
   <!-- نافذة تسجيل الدخول -->
   <div id="authModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl relative">
@@ -37,7 +44,7 @@
    </div>
   </div>
 
-  <!-- نافذة مؤقت النوم (قابلة للسحب والقفل) -->
+  <!-- نافذة مؤقت النوم -->
   <div id="sleepModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden pointer-events-none">
    <div id="sleepModalBox" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl relative pointer-events-auto cursor-grab active:cursor-grabbing">
     <div class="flex justify-between items-center select-none" id="sleepModalHeader">
@@ -84,9 +91,12 @@
     </div>
    </div>
   </header>
+
   <main class="max-w-md mx-auto w-full p-4 flex-1 space-y-4">
-   <div class="relative">
-    <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i> <input type="text" id="searchInput" oninput="renderTracks()" placeholder="ابحث عن أنشودة..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pr-11 pl-4 py-3 text-sm focus:outline-none focus:border-emerald-500">
+   <div class="relative flex items-center">
+    <i class="fa-solid fa-magnifying-glass absolute right-4 text-slate-400"></i> 
+    <input type="text" id="searchInput" oninput="renderTracks()" placeholder="ابحث عن أنشودة..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pr-11 pl-12 py-3 text-sm focus:outline-none focus:border-emerald-500">
+    <button onclick="startVoiceSearch()" class="absolute left-3 text-slate-400 hover:text-emerald-500 p-1" title="بحث صوتي"><i class="fa-solid fa-microphone text-sm"></i></button>
    </div>
    <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs">
     <button onclick="selectCategory('all')" id="filt_all" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0">الكل</button>
@@ -108,53 +118,70 @@
    <div id="tracksList" class="space-y-3"></div>
   </main>
   
-  <div id="miniPlayer" onclick="openFullPlayer()" class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 p-3 z-40 cursor-pointer shadow-lg">
-   <div class="max-w-md mx-auto flex items-center justify-between">
-    <div class="flex items-center gap-3 overflow-hidden">
-     <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">لا إله إلا الله</div>
-     <div class="truncate">
-      <h4 id="miniTitle" class="font-bold text-sm truncate">اختر أنشودة</h4>
-      <p id="miniArtist" class="text-xs text-slate-400 truncate">--</p>
+  <!-- المشغل المصغّر -->
+  <div id="miniPlayer" class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 z-40 shadow-lg">
+   <div class="max-w-md mx-auto">
+    <input type="range" id="miniProgressBar" value="0" min="0" max="100" step="0.1" oninput="seekTrackMini()" class="w-full accent-emerald-500 h-1 bg-slate-200 dark:bg-slate-800 appearance-none cursor-pointer">
+    <div onclick="openFullPlayer()" class="px-4 py-2.5 flex items-center justify-between cursor-pointer">
+     <div class="flex items-center gap-3 overflow-hidden">
+      <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">لا إله إلا الله</div>
+      <div class="truncate">
+       <h4 id="miniTitle" class="font-bold text-sm truncate">اختر أنشودة</h4>
+       <p id="miniArtist" class="text-xs text-slate-400 truncate">--</p>
+      </div>
      </div>
-    </div>
-    <div class="flex items-center gap-3" onclick="event.stopPropagation()">
-     <button onclick="togglePlay()" class="w-10 h-10 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold"><i id="miniPlayIcon" class="fa-solid fa-play"></i></button>
+     <div class="flex items-center gap-3" onclick="event.stopPropagation()">
+      <button onclick="togglePlay()" class="w-10 h-10 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold shadow"><i id="miniPlayIcon" class="fa-solid fa-play"></i></button>
+     </div>
     </div>
    </div>
   </div>
 
+  <!-- المشغل الكامل -->
   <div id="fullPlayer" class="fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 transition-transform duration-300 translate-y-full max-w-md mx-auto text-white">
    <div class="flex justify-between items-center pt-2">
     <button onclick="openSleepModal()" class="text-slate-300 text-lg relative p-2" title="مؤقت النوم"><i class="fa-solid fa-clock"></i><span id="sleepBadge" class="absolute top-0 right-0 text-[9px] bg-emerald-500 text-slate-950 px-1 rounded-full hidden">0</span></button>
     <button onclick="closeFullPlayer()" class="text-2xl p-1"><i class="fa-solid fa-chevron-down"></i></button>
    </div>
    <div class="my-auto py-2 flex flex-col items-center w-full">
-    <div class="w-64 h-64 rounded-3xl overflow-hidden border border-slate-800 bg-black shadow-2xl my-4 flex items-center justify-center text-center p-4">
-     <span class="text-3xl font-extrabold text-white leading-relaxed">لا إله إلا الله</span>
+    <!-- غلاف يعرض عبارة لا إله إلا الله بشكل واضح وهادئ -->
+    <div class="relative w-64 h-64 rounded-3xl overflow-hidden border border-slate-800 bg-black shadow-2xl my-4 flex flex-col items-center justify-center text-center p-6">
+     <span class="text-2xl font-bold text-white select-none">لا إله إلا الله</span>
     </div>
     <h2 id="fullTitle" class="text-lg font-bold truncate px-4">اختر أنشودة</h2>
     <p id="fullArtist" class="text-xs text-slate-300 mt-1">--</p>
     <div class="flex items-center gap-4 mt-4">
      <button id="fullFavBtn" onclick="toggleCurrentFavorite()" class="text-xl text-slate-300"><i class="fa-regular fa-star"></i></button>
-     <button onclick="shareCurrentTrack()" class="text-xl text-slate-300"><i class="fa-solid fa-share-nodes"></i></button>
-     <button onclick="downloadCurrentTrack()" class="text-xl text-slate-300"><i class="fa-solid fa-download"></i></button>
+     <button onclick="shareCurrentTrack()" class="text-xl text-slate-300" title="مشاركة الأنشودة"><i class="fa-solid fa-share-nodes"></i></button>
+     <button onclick="downloadCurrentTrack()" class="text-xl text-slate-300" title="تحميل الأنشودة"><i class="fa-solid fa-download"></i></button>
     </div>
    </div>
    <div class="space-y-4 mb-4 w-full">
-    <input type="range" id="progressBar" value="0" oninput="seekTrack()" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg">
+    <input type="range" id="progressBar" value="0" min="0" max="100" step="0.1" oninput="seekTrack()" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg cursor-pointer">
     <div class="flex justify-between text-[11px] text-slate-300">
      <span id="currentTime">0:00</span> <span id="duration">0:00</span>
     </div>
+    
+    <!-- شريط تحكم مستوى الصوت -->
+    <div class="flex items-center gap-3 px-1 text-slate-400">
+     <i class="fa-solid fa-volume-low text-xs"></i>
+     <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg cursor-pointer">
+     <i class="fa-solid fa-volume-high text-xs"></i>
+    </div>
+
     <div class="flex items-center justify-between px-2 pt-2">
      <button onclick="openQueueModal()" class="text-slate-300 text-lg"><i class="fa-solid fa-list-ul"></i></button>
+     <button onclick="toggleShuffle()" id="shuffleBtn" class="text-slate-300 text-lg" title="تشغيل عشوائي"><i class="fa-solid fa-shuffle"></i></button>
      <button onclick="prevTrack()" class="text-white text-xl"><i class="fa-solid fa-backward-step"></i></button>
-     <button onclick="togglePlay()" class="w-16 h-16 rounded-full bg-white/20 text-white flex items-center justify-center text-2xl"><i id="fullPlayIcon" class="fa-solid fa-play"></i></button>
+     <button onclick="togglePlay()" class="w-16 h-16 rounded-full bg-white/20 text-white flex items-center justify-center text-2xl shadow"><i id="fullPlayIcon" class="fa-solid fa-play"></i></button>
      <button onclick="nextTrack()" class="text-white text-xl"><i class="fa-solid fa-forward-step"></i></button>
-     <button id="repeatBtn" onclick="toggleRepeat()" class="text-slate-300 text-lg"><i class="fa-solid fa-repeat"></i></button>
+     <button id="repeatBtn" onclick="toggleRepeat()" class="text-slate-300 text-lg" title="تكرار"><i class="fa-solid fa-repeat"></i></button>
     </div>
    </div>
   </div>
+
   <audio id="audioPlayer"></audio>
+
   <script>
     const initialTracks = [
       { id: 1, title: "نهضي امتنا", artist: "ابو مصعب", category: "ابو مصعب", url: "https://files.catbox.moe/v2hjv6.mp3", duration: "--:--" },
@@ -174,6 +201,8 @@
     let sleepTimerInterval = null;
     let sleepTimeRemaining = 0;
     let isSleepLocked = false;
+    let repeatMode = 0; 
+    let isShuffle = false;
 
     function loadUserData() {
       if (currentUser) {
@@ -198,7 +227,7 @@
     let trackViews = JSON.parse(localStorage.getItem('track_views')) || {};
     initialTracks.forEach(t => { if(trackViews[t.id] === undefined) trackViews[t.id] = 0; });
 
-    let currentTrackId = null, currentViewMode = 'all', selectedCategory = 'all', isRepeat = false;
+    let currentTrackId = null, currentViewMode = 'all', selectedCategory = 'all';
     const audio = document.getElementById('audioPlayer');
 
     initialTracks.forEach(t => {
@@ -209,8 +238,6 @@
       };
     });
 
-    if(localStorage.getItem('site_theme') !== 'light') document.documentElement.classList.add('dark');
-
     function toggleTheme() {
       let dark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('site_theme', dark ? 'dark' : 'light');
@@ -219,13 +246,8 @@
     function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
     function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
     
-    function openSleepModal() { 
-      let modal = document.getElementById('sleepModal');
-      modal.classList.remove('hidden'); 
-    }
-    function closeSleepModal() { 
-      document.getElementById('sleepModal').classList.add('hidden'); 
-    }
+    function openSleepModal() { document.getElementById('sleepModal').classList.remove('hidden'); }
+    function closeSleepModal() { document.getElementById('sleepModal').classList.add('hidden'); }
 
     function toggleLockSleepModal() {
       isSleepLocked = !isSleepLocked;
@@ -233,23 +255,18 @@
       let box = document.getElementById('sleepModalBox');
       if (isSleepLocked) {
         btn.innerHTML = '<i class="fa-solid fa-lock text-xs text-emerald-400"></i>';
-        btn.title = 'مقفل (اضغط للفتح)';
         box.style.cursor = 'default';
       } else {
         btn.innerHTML = '<i class="fa-solid fa-lock-open text-xs"></i>';
-        btn.title = 'قفل أو تحريك';
         box.style.cursor = 'grab';
       }
     }
 
-    // إعداد السحب والإفلات لنافذة المؤقت
     const sleepBox = document.getElementById('sleepModalBox');
     let isDragging = false, startX, startY, initialX = 0, initialY = 0;
 
     sleepBox.addEventListener('pointerdown', (e) => {
-      if (isSleepLocked) return;
-      // منع السحب إذا تم الضغط على الأزرار الداخلية
-      if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+      if (isSleepLocked || e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
       isDragging = true;
       startX = e.clientX - initialX;
       startY = e.clientY - initialY;
@@ -264,7 +281,7 @@
       sleepBox.style.transform = `translate(${initialX}px, ${initialY}px)`;
     });
 
-    sleepBox.addEventListener('pointerup', (e) => {
+    sleepBox.addEventListener('pointerup', () => {
       isDragging = false;
       if (!isSleepLocked) sleepBox.style.cursor = 'grab';
     });
@@ -386,7 +403,7 @@
       });
     }
 
-    function playTrack(id) {
+    function playTrack(id, savedTime = 0) {
       let t = initialTracks.find(x => x.id === id);
       if(!t) return;
       
@@ -405,6 +422,11 @@
       document.getElementById('fullFavBtn').innerHTML = `<i class="${favorites.includes(id)?'fa-solid text-yellow-400':'fa-regular text-slate-300'} fa-star"></i>`;
 
       audio.src = t.url;
+      audio.onloadedmetadata = () => {
+        if (savedTime > 0) audio.currentTime = savedTime;
+        audio.play();
+        updatePlayIcons(true);
+      };
       audio.play();
       updatePlayIcons(true);
       renderTracks();
@@ -450,53 +472,126 @@
 
     function nextTrack() {
       if(!currentTrackId) return;
+      if (isShuffle) {
+        let randomIndex = Math.floor(Math.random() * initialTracks.length);
+        playTrack(initialTracks[randomIndex].id);
+        return;
+      }
       let idx = initialTracks.findIndex(t => t.id === currentTrackId);
       playTrack(initialTracks[(idx + 1) % initialTracks.length].id);
     }
+
     function prevTrack() {
       if(!currentTrackId) return;
       let idx = initialTracks.findIndex(t => t.id === currentTrackId);
       playTrack(initialTracks[(idx - 1 + initialTracks.length) % initialTracks.length].id);
     }
 
-    function toggleRepeat() {
-      isRepeat = !isRepeat;
-      document.getElementById('repeatBtn').className = isRepeat ? "text-emerald-400 text-lg scale-110" : "text-slate-300 text-lg";
+    function toggleShuffle() {
+      isShuffle = !isShuffle;
+      let btn = document.getElementById('shuffleBtn');
+      if (isShuffle) {
+        btn.className = "text-emerald-400 text-lg scale-110";
+        btn.title = "التشغيل العشوائي مفعل";
+      } else {
+        btn.className = "text-slate-300 text-lg";
+        btn.title = "تشغيل عشوائي";
+      }
     }
 
-    audio.onended = () => { isRepeat ? (audio.currentTime = 0, audio.play()) : nextTrack(); };
+    function toggleRepeat() {
+      repeatMode = (repeatMode + 1) % 3;
+      let btn = document.getElementById('repeatBtn');
+      if (repeatMode === 0) {
+        btn.className = "text-slate-300 text-lg";
+        btn.title = "بدون تكرار";
+      } else if (repeatMode === 1) {
+        btn.className = "text-emerald-400 text-lg scale-110";
+        btn.title = "تكرار القائمة";
+      } else if (repeatMode === 2) {
+        btn.className = "text-amber-400 text-lg scale-110 relative";
+        btn.title = "تكرار فردي (Repeat One)";
+      }
+    }
+
+    function changeVolume(val) {
+      audio.volume = val;
+    }
+
+    function startVoiceSearch() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('متصفحك لا يدعم خاصية البحث الصوتي');
+        return;
+      }
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ar-SA';
+      recognition.start();
+      recognition.onresult = (event) => {
+        let speechToText = event.results[0][0].transcript;
+        document.getElementById('searchInput').value = speechToText;
+        renderTracks();
+      };
+    }
+
+    audio.onended = () => { 
+      if (repeatMode === 2) { 
+        audio.currentTime = 0; 
+        audio.play(); 
+      } else if (repeatMode === 1 || isShuffle) { 
+        nextTrack(); 
+      } else { 
+        let idx = initialTracks.findIndex(t => t.id === currentTrackId);
+        if(idx < initialTracks.length - 1) nextTrack();
+      }
+    };
+
     audio.ontimeupdate = () => {
       if(!audio.duration) return;
-      document.getElementById('progressBar').value = (audio.currentTime / audio.duration) * 100;
+      let val = (audio.currentTime / audio.duration) * 100;
+      document.getElementById('progressBar').value = val;
+      document.getElementById('miniProgressBar').value = val;
       document.getElementById('currentTime').innerText = fmt(audio.currentTime);
       document.getElementById('duration').innerText = fmt(audio.duration);
+
+      if (currentTrackId) {
+        localStorage.setItem('last_played_track', currentTrackId);
+        localStorage.setItem('last_played_time', audio.currentTime);
+      }
     };
+
     function seekTrack() { audio.currentTime = (document.getElementById('progressBar').value / 100) * audio.duration; }
+    function seekTrackMini() { audio.currentTime = (document.getElementById('miniProgressBar').value / 100) * audio.duration; }
     function fmt(sec) { return Math.floor(sec/60) + ":" + (Math.floor(sec%60)<10?'0':'') + Math.floor(sec%60); }
 
-    // التحكم بزر الرجوع في الهاتف
-    history.pushState(null, '', location.href);
-    window.addEventListener('popstate', function (event) {
-      let fullPlayer = document.getElementById('fullPlayer');
-      let authModal = document.getElementById('authModal');
-      let sleepModal = document.getElementById('sleepModal');
-      let queueModal = document.getElementById('queueModal');
-      
-      if (!authModal.classList.contains('hidden')) {
-        closeAuthModal();
-        history.pushState(null, '', location.href);
-      } else if (!sleepModal.classList.contains('hidden')) {
-        closeSleepModal();
-        history.pushState(null, '', location.href);
-      } else if (!queueModal.classList.contains('hidden')) {
-        closeQueueModal();
-        history.pushState(null, '', location.href);
-      } else if (!fullPlayer.classList.contains('translate-y-full')) {
-        closeFullPlayer();
-        history.pushState(null, '', location.href);
-      } else {
-        history.pushState(null, '', location.href);
+    window.addEventListener('DOMContentLoaded', () => {
+      let lastTrack = localStorage.getItem('last_played_track');
+      let lastTime = parseFloat(localStorage.getItem('last_played_time')) || 0;
+      if (lastTrack) {
+        let t = initialTracks.find(x => x.id == lastTrack);
+        if (t) {
+          currentTrackId = t.id;
+          document.getElementById('miniTitle').innerText = t.title;
+          document.getElementById('miniArtist').innerText = t.artist;
+          document.getElementById('fullTitle').innerText = t.title;
+          document.getElementById('fullArtist').innerText = t.artist;
+          audio.src = t.url;
+          audio.onloadedmetadata = () => {
+            if (lastTime > 0 && lastTime < audio.duration) {
+              audio.currentTime = lastTime;
+            }
+          };
+        }
       }
+    });
+
+    history.pushState(null, '', location.href);
+    window.addEventListener('popstate', function () {
+      if (!document.getElementById('authModal').classList.contains('hidden')) { closeAuthModal(); history.pushState(null, '', location.href); }
+      else if (!document.getElementById('sleepModal').classList.contains('hidden')) { closeSleepModal(); history.pushState(null, '', location.href); }
+      else if (!document.getElementById('queueModal').classList.contains('hidden')) { closeQueueModal(); history.pushState(null, '', location.href); }
+      else if (!document.getElementById('fullPlayer').classList.contains('translate-y-full')) { closeFullPlayer(); history.pushState(null, '', location.href); }
+      else { history.pushState(null, '', location.href); }
     });
 
     renderTracks();
