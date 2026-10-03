@@ -9,51 +9,36 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&amp;display=swap" rel="stylesheet">
   <style>body { font-family: 'Tajawal', sans-serif; }</style>
  </head>
  <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24 select-none">
-  
   <!-- نافذة تسجيل الدخول مع زر X للخروج -->
   <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl relative">
-    
     <!-- زر الإغلاق X -->
-    <button onclick="closeAuthModal()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors">
-     <i class="fa-solid fa-xmark text-sm"></i>
-    </button>
-
+    <button onclick="closeAuthModal()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
     <div class="text-center space-y-1 pt-2">
-     <div class="w-12 h-12 rounded-xl bg-black border border-slate-800 flex items-center justify-center font-bold text-[10px] text-white p-1 text-center leading-tight mx-auto mb-2">
-      لا إله إلا الله
-     </div>
+     <div class="w-12 h-12 rounded-xl bg-black border border-slate-800 flex items-center justify-center font-bold text-[10px] text-white p-1 text-center leading-tight mx-auto mb-2">لا إله إلا الله</div>
      <h2 class="font-bold text-lg">تسجيل الدخول للمنصة</h2>
      <p class="text-xs text-slate-400">سجل دخولك لحفظ السجل والمفضلة الخاصة بك</p>
     </div>
     <div class="space-y-3">
      <div>
-      <label class="text-xs text-slate-400 mb-1 block">اسم المستخدم أو البريد</label>
-      <input type="text" id="authUsername" placeholder="أدخل اسمك..." class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500">
+      <label class="text-xs text-slate-400 mb-1 block">اسم المستخدم أو البريد</label> <input type="text" id="authUsername" placeholder="أدخل اسمك..." class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500">
      </div>
      <div>
-      <label class="text-xs text-slate-400 mb-1 block">كلمة المرور</label>
-      <input type="password" id="authPassword" placeholder="••••••••" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500">
+      <label class="text-xs text-slate-400 mb-1 block">كلمة المرور</label> <input type="password" id="authPassword" placeholder="••••••••" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500">
      </div>
      <button onclick="handleLogin()" class="w-full py-3 rounded-xl bg-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20">دخول / إنشاء حساب</button>
     </div>
    </div>
   </div>
-
   <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 p-4">
    <div class="max-w-md mx-auto flex justify-between items-center">
     <div class="flex items-center gap-2">
-     <button onclick="toggleTheme()" class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-amber-500 dark:text-emerald-400">
-      <i id="themeIcon" class="fa-solid fa-moon text-lg"></i>
-     </button>
-     <button onclick="openAuthModal()" class="px-3 h-11 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
-      <i class="fa-solid fa-user text-emerald-500"></i>
-      <span id="userProfileName">زائر</span>
-     </button>
+     <button onclick="toggleTheme()" class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-amber-500 dark:text-emerald-400"><i id="themeIcon" class="fa-solid fa-moon text-lg"></i></button>
+     <button onclick="openAuthModal()" class="px-3 h-11 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300"><i class="fa-solid fa-user text-emerald-500"></i> <span id="userProfileName">زائر</span></button>
     </div>
     <div class="flex items-center gap-3 text-left">
      <div>
@@ -61,46 +46,36 @@
       <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Alaa e mahmud</p>
       <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">جميع الحقوق محفوظة © 2026</p>
      </div>
-     <div class="w-10 h-10 rounded-xl bg-black border border-slate-800 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">
-      لا إله إلا الله
-     </div>
+     <div class="w-10 h-10 rounded-xl bg-black border border-slate-800 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">لا إله إلا الله</div>
     </div>
    </div>
   </header>
-
   <main class="max-w-md mx-auto w-full p-4 flex-1 space-y-4">
    <div class="relative">
-    <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i> 
-    <input type="text" id="searchInput" oninput="renderTracks()" placeholder="ابحث عن أنشودة..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pr-11 pl-4 py-3 text-sm focus:outline-none focus:border-emerald-500">
+    <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i> <input type="text" id="searchInput" oninput="renderTracks()" placeholder="ابحث عن أنشودة..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pr-11 pl-4 py-3 text-sm focus:outline-none focus:border-emerald-500">
    </div>
-
    <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs">
     <button onclick="selectCategory('all')" id="filt_all" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0">الكل</button>
     <button onclick="selectCategory('الشيخ سعد الغامدي')" id="filt_الشيخ سعد الغامدي" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">الشيخ سعد الغامدي</button>
     <button onclick="selectCategory('ابو مصعب')" id="filt_ابو مصعب" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">ابو مصعب</button>
     <button onclick="selectCategory('نايف الشرهان')" id="filt_نايف الشرهان" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">نايف الشرهان</button>
+    <button onclick="selectCategory('أسامة')" id="filt_أسامة" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">أسامة</button>
    </div>
-   
    <div class="flex gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 text-xs font-bold">
     <button id="btnAll" onclick="setViewMode('all')" class="flex-1 py-2 rounded-lg bg-emerald-500 text-slate-950">الكل</button>
     <button id="btnFav" onclick="setViewMode('favorites')" class="flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5"><i class="fa-solid fa-heart text-red-500"></i> المفضلة</button>
     <button id="btnHistory" onclick="setViewMode('history')" class="flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-emerald-500"></i> السجل</button>
    </div>
-   
    <div id="historyHeader" class="hidden flex justify-between items-center text-xs text-slate-500 px-1">
     <span>الأناشيد المستمع إليها مؤخراً</span>
     <button onclick="clearHistory()" class="text-red-400 hover:underline"><i class="fa-solid fa-trash-can"></i> مسح السجل</button>
    </div>
-   
    <div id="tracksList" class="space-y-3"></div>
   </main>
-
   <div id="miniPlayer" onclick="openFullPlayer()" class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 p-3 z-40 cursor-pointer shadow-lg">
    <div class="max-w-md mx-auto flex items-center justify-between">
     <div class="flex items-center gap-3 overflow-hidden">
-     <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">
-      لا إله إلا الله
-     </div>
+     <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">لا إله إلا الله</div>
      <div class="truncate">
       <h4 id="miniTitle" class="font-bold text-sm truncate">اختر أنشودة</h4>
       <p id="miniArtist" class="text-xs text-slate-400 truncate">--</p>
@@ -111,7 +86,6 @@
     </div>
    </div>
   </div>
-
   <div id="fullPlayer" class="fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 transition-transform duration-300 translate-y-full max-w-md mx-auto text-white">
    <div class="flex justify-end items-center pt-2">
     <button onclick="closeFullPlayer()" class="text-2xl p-1"><i class="fa-solid fa-chevron-down"></i></button>
@@ -138,16 +112,16 @@
     </div>
    </div>
   </div>
-  
   <audio id="audioPlayer"></audio>
-  
   <script>
     const initialTracks = [
       { id: 1, title: "نهضي امتنا", artist: "ابو مصعب", category: "ابو مصعب", url: "https://files.catbox.moe/v2hjv6.mp3", duration: "--:--" },
       { id: 2, title: "صبرا يا نفسي معنا الله", artist: "نايف الشرهان", category: "نايف الشرهان", url: "https://files.catbox.moe/10hdmv.mp3", duration: "--:--" },
       { id: 3, title: "أتينا", artist: "ابو مصعب", category: "ابو مصعب", url: "https://files.catbox.moe/d0itzp.mp3", duration: "--:--" },
       { id: 4, title: "غرباء", artist: "الشيخ سعد الغامدي", category: "الشيخ سعد الغامدي", url: "https://files.catbox.moe/oqlcjd.mp3", duration: "--:--" },
-      { id: 5, title: "رضيت بالدون", artist: "ابو مصعب", category: "ابو مصعب", url: "https://files.catbox.moe/9jqhc1.mp3", duration: "--:--" }
+      { id: 5, title: "رضيت بالدون", artist: "ابو مصعب", category: "ابو مصعب", url: "https://files.catbox.moe/9jqhc1.mp3", duration: "--:--" },
+      { id: 6, title: "يالادمي", artist: "ابو مصعب", category: "ابو مصعب", url: "https://files.catbox.moe/rjlmfg.mp3", duration: "--:--" },
+      { id: 7, title: "الكاذبون على المدي", artist: "نايف الشرهان", category: "نايف الشرهان", url: "https://files.catbox.moe/dtpoc8.mp3", duration: "--:--" }
     ];
 
     let currentUser = localStorage.getItem('current_user') || null;
@@ -174,7 +148,9 @@
 
     loadUserData();
 
-    let trackViews = JSON.parse(localStorage.getItem('track_views')) || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let trackViews = JSON.parse(localStorage.getItem('track_views')) || {};
+    initialTracks.forEach(t => { if(trackViews[t.id] === undefined) trackViews[t.id] = 0; });
+
     let currentTrackId = null, currentViewMode = 'all', selectedCategory = 'all', isRepeat = false;
     const audio = document.getElementById('audioPlayer');
 
@@ -213,7 +189,7 @@
 
     function selectCategory(cat) {
       selectedCategory = cat;
-      ['all', 'الشيخ سعد الغامدي', 'ابو مصعب', 'نايف الشرهان'].forEach(c => {
+      ['all', 'الشيخ سعد الغامدي', 'ابو مصعب', 'نايف الشرهان', 'أسامة'].forEach(c => {
         let b = document.getElementById('filt_' + c);
         if(b) b.className = (c === cat) ? "px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0" : "px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0";
       });
