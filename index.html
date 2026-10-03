@@ -13,10 +13,9 @@
   <style>body { font-family: 'Tajawal', sans-serif; }</style>
  </head>
  <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24 select-none">
-  <!-- نافذة تسجيل الدخول مع زر X للخروج -->
+  <!-- نافذة تسجيل الدخول -->
   <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl relative">
-    <!-- زر الإغلاق X -->
     <button onclick="closeAuthModal()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
     <div class="text-center space-y-1 pt-2">
      <div class="w-12 h-12 rounded-xl bg-black border border-slate-800 flex items-center justify-center font-bold text-[10px] text-white p-1 text-center leading-tight mx-auto mb-2">لا إله إلا الله</div>
@@ -34,6 +33,29 @@
     </div>
    </div>
   </div>
+
+  <!-- نافذة مؤقت النوم -->
+  <div id="sleepModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl relative">
+    <div class="flex justify-between items-center"><h3 class="font-bold text-sm">مؤقت إيقاف التشغيل</h3><button onclick="closeSleepModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="grid grid-cols-2 gap-2 text-xs">
+     <button onclick="setSleepTimer(15)" class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 transition-colors">15 دقيقة</button>
+     <button onclick="setSleepTimer(30)" class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 transition-colors">30 دقيقة</button>
+     <button onclick="setSleepTimer(45)" class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 transition-colors">45 دقيقة</button>
+     <button onclick="setSleepTimer(60)" class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 transition-colors">60 دقيقة</button>
+    </div>
+    <button onclick="setSleepTimer(0)" class="w-full py-2 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold">إلغاء المؤقت</button>
+   </div>
+  </div>
+
+  <!-- نافذة قائمة الانتظار -->
+  <div id="queueModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-3 shadow-2xl relative max-h-[80vh] flex flex-col">
+    <div class="flex justify-between items-center"><h3 class="font-bold text-sm">قائمة التشغيل التالية</h3><button onclick="closeQueueModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div>
+    <div id="queueList" class="overflow-y-auto space-y-2 flex-1 pr-1"></div>
+   </div>
+  </div>
+
   <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 p-4">
    <div class="max-w-md mx-auto flex justify-between items-center">
     <div class="flex items-center gap-2">
@@ -73,6 +95,7 @@
    </div>
    <div id="tracksList" class="space-y-3"></div>
   </main>
+  
   <div id="miniPlayer" onclick="openFullPlayer()" class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 p-3 z-40 cursor-pointer shadow-lg">
    <div class="max-w-md mx-auto flex items-center justify-between">
     <div class="flex items-center gap-3 overflow-hidden">
@@ -87,8 +110,10 @@
     </div>
    </div>
   </div>
+
   <div id="fullPlayer" class="fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 transition-transform duration-300 translate-y-full max-w-md mx-auto text-white">
-   <div class="flex justify-end items-center pt-2">
+   <div class="flex justify-between items-center pt-2">
+    <button onclick="openSleepModal()" class="text-slate-300 text-lg relative" title="مؤقت النوم"><i class="fa-solid fa-moon"></i><span id="sleepBadge" class="absolute -top-1 -right-2 text-[9px] bg-emerald-500 text-slate-950 px-1 rounded-full hidden">0</span></button>
     <button onclick="closeFullPlayer()" class="text-2xl p-1"><i class="fa-solid fa-chevron-down"></i></button>
    </div>
    <div class="my-auto py-2 flex flex-col items-center w-full">
@@ -97,7 +122,11 @@
     </div>
     <h2 id="fullTitle" class="text-lg font-bold truncate px-4">اختر أنشودة</h2>
     <p id="fullArtist" class="text-xs text-slate-300 mt-1">--</p>
-    <button id="fullFavBtn" onclick="toggleCurrentFavorite()" class="text-xl text-slate-300 mt-4"><i class="fa-regular fa-star"></i></button>
+    <div class="flex items-center gap-4 mt-4">
+     <button id="fullFavBtn" onclick="toggleCurrentFavorite()" class="text-xl text-slate-300"><i class="fa-regular fa-star"></i></button>
+     <button onclick="shareCurrentTrack()" class="text-xl text-slate-300"><i class="fa-solid fa-share-nodes"></i></button>
+     <button onclick="downloadCurrentTrack()" class="text-xl text-slate-300"><i class="fa-solid fa-download"></i></button>
+    </div>
    </div>
    <div class="space-y-4 mb-4 w-full">
     <input type="range" id="progressBar" value="0" oninput="seekTrack()" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg">
@@ -105,7 +134,7 @@
      <span id="currentTime">0:00</span> <span id="duration">0:00</span>
     </div>
     <div class="flex items-center justify-between px-2 pt-2">
-     <button class="text-slate-300 text-lg"><i class="fa-solid fa-list-ul"></i></button>
+     <button onclick="openQueueModal()" class="text-slate-300 text-lg"><i class="fa-solid fa-list-ul"></i></button>
      <button onclick="prevTrack()" class="text-white text-xl"><i class="fa-solid fa-backward-step"></i></button>
      <button onclick="togglePlay()" class="w-16 h-16 rounded-full bg-white/20 text-white flex items-center justify-center text-2xl"><i id="fullPlayIcon" class="fa-solid fa-play"></i></button>
      <button onclick="nextTrack()" class="text-white text-xl"><i class="fa-solid fa-forward-step"></i></button>
@@ -130,6 +159,8 @@
     let currentUser = localStorage.getItem('current_user') || null;
     let favorites = [];
     let historyTracks = [];
+    let sleepTimerInterval = null;
+    let sleepTimeRemaining = 0;
 
     function loadUserData() {
       if (currentUser) {
@@ -172,12 +203,67 @@
       localStorage.setItem('site_theme', dark ? 'dark' : 'light');
     }
 
-    function openAuthModal() {
-      document.getElementById('authModal').classList.remove('hidden');
+    function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
+    function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
+    function openSleepModal() { document.getElementById('sleepModal').classList.remove('hidden'); }
+    function closeSleepModal() { document.getElementById('sleepModal').classList.add('hidden'); }
+    
+    function openQueueModal() {
+      let list = document.getElementById('queueList');
+      list.innerHTML = '';
+      initialTracks.forEach(t => {
+        list.innerHTML += `<div onclick="playTrack(${t.id}); closeQueueModal();" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 flex justify-between items-center text-xs cursor-pointer"><span>${t.title}</span><span class="text-slate-400">${t.artist}</span></div>`;
+      });
+      document.getElementById('queueModal').classList.remove('hidden');
+    }
+    function closeQueueModal() { document.getElementById('queueModal').classList.add('hidden'); }
+
+    function setSleepTimer(minutes) {
+      clearInterval(sleepTimerInterval);
+      closeSleepModal();
+      let badge = document.getElementById('sleepBadge');
+      if (minutes === 0) {
+        badge.classList.add('hidden');
+        return;
+      }
+      sleepTimeRemaining = minutes * 60;
+      badge.innerText = minutes;
+      badge.classList.remove('hidden');
+      
+      sleepTimerInterval = setInterval(() => {
+        sleepTimeRemaining--;
+        let mins = Math.ceil(sleepTimeRemaining / 60);
+        badge.innerText = mins;
+        if (sleepTimeRemaining <= 0) {
+          clearInterval(sleepTimerInterval);
+          audio.pause();
+          updatePlayIcons(false);
+          badge.classList.add('hidden');
+        }
+      }, 1000);
     }
 
-    function closeAuthModal() {
-      document.getElementById('authModal').classList.add('hidden');
+    function downloadCurrentTrack() {
+      let t = initialTracks.find(x => x.id === currentTrackId);
+      if(!t) return;
+      let a = document.createElement('a');
+      a.href = t.url;
+      a.download = t.title + '.mp3';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function shareCurrentTrack() {
+      let t = initialTracks.find(x => x.id === currentTrackId);
+      if(!t) return;
+      if (navigator.share) {
+        navigator.share({ title: t.title, text: 'اسمع هذه الأنشودة الرائعة: ' + t.title, url: t.url }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(t.url);
+        alert('تم نسخ رابط الأنشودة!');
+      }
     }
 
     function handleLogin() {
@@ -231,7 +317,10 @@
                 </div>
               </div>
             </div>
-            <button onclick="toggleFavorite(event, ${t.id})" class="p-2 text-lg"><i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular text-slate-400'} fa-heart"></i></button>
+            <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+              <a href="${t.url}" download class="p-2 text-slate-400 hover:text-emerald-500"><i class="fa-solid fa-download text-xs"></i></a>
+              <button onclick="toggleFavorite(event, ${t.id})" class="p-2 text-lg"><i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular text-slate-400'} fa-heart"></i></button>
+            </div>
           </div>`;
       });
     }
@@ -324,14 +413,22 @@
     function seekTrack() { audio.currentTime = (document.getElementById('progressBar').value / 100) * audio.duration; }
     function fmt(sec) { return Math.floor(sec/60) + ":" + (Math.floor(sec%60)<10?'0':'') + Math.floor(sec%60); }
 
-    // التحكم بزر الرجوع في الهاتف لمنع الخروج السريع
+    // التحكم بزر الرجوع في الهاتف
     history.pushState(null, '', location.href);
     window.addEventListener('popstate', function (event) {
       let fullPlayer = document.getElementById('fullPlayer');
       let authModal = document.getElementById('authModal');
+      let sleepModal = document.getElementById('sleepModal');
+      let queueModal = document.getElementById('queueModal');
       
       if (!authModal.classList.contains('hidden')) {
         closeAuthModal();
+        history.pushState(null, '', location.href);
+      } else if (!sleepModal.classList.contains('hidden')) {
+        closeSleepModal();
+        history.pushState(null, '', location.href);
+      } else if (!queueModal.classList.contains('hidden')) {
+        closeQueueModal();
         history.pushState(null, '', location.href);
       } else if (!fullPlayer.classList.contains('translate-y-full')) {
         closeFullPlayer();
