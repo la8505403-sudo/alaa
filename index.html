@@ -247,6 +247,7 @@
       loadDurations();
       setupModalDragging();
       setupSwipeGestures();
+      setupBackButtonHandler();
     }
 
     function updateUserProfileUI() {
@@ -262,8 +263,13 @@
       }
     }
 
-    function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
-    function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
+    function openAuthModal() {
+      history.pushState({ modal: 'auth' }, '');
+      document.getElementById('authModal').classList.remove('hidden');
+    }
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+    }
 
     function handleLogin() {
       const val = document.getElementById('authUsername').value.trim();
@@ -271,7 +277,7 @@
         currentUser = val;
         localStorage.setItem('current_user', currentUser);
         updateUserProfileUI();
-        closeAuthModal();
+        history.back(); // إغلاق نافذة الدخول عبر العودة للسجل
         renderTracks();
       }
     }
@@ -329,7 +335,6 @@
         addToHistory(id);
         openFullPlayer();
         
-        // إذا كان المضيف يشغل أنشودة، يرسل التحديث لكل المتصلين بالغرفة تلقائياً
         if (isHost && conn && conn.open) {
           conn.send({
             type: 'play_track',
@@ -510,11 +515,36 @@
       renderTracks();
     }
 
+    // إدارة فتح وإغلاق المشغل الكامل مع زر الرجوع
     function openFullPlayer() {
+      history.pushState({ modal: 'fullPlayer' }, '');
       document.getElementById('fullPlayer').classList.remove('translate-y-full');
     }
     function closeFullPlayer() {
       document.getElementById('fullPlayer').classList.add('translate-y-full');
+    }
+
+    // نظام اعتراض زر الرجوع في الجهاز
+    function setupBackButtonHandler() {
+      window.addEventListener('popstate', (event) => {
+        const fullPlayer = document.getElementById('fullPlayer');
+        const authModal = document.getElementById('authModal');
+        const commentsModal = document.getElementById('commentsModal');
+        const sleepModal = document.getElementById('sleepModal');
+        const queueModal = document.getElementById('queueModal');
+
+        if (!fullPlayer.classList.contains('translate-y-full')) {
+          fullPlayer.classList.add('translate-y-full');
+        } else if (!authModal.classList.contains('hidden')) {
+          authModal.classList.add('hidden');
+        } else if (!commentsModal.classList.contains('hidden')) {
+          commentsModal.classList.add('hidden');
+        } else if (!sleepModal.classList.contains('hidden')) {
+          sleepModal.classList.add('hidden');
+        } else if (!queueModal.classList.contains('hidden')) {
+          queueModal.classList.add('hidden');
+        }
+      });
     }
 
     function setupSwipeGestures() {
@@ -541,7 +571,7 @@
 
         if (Math.abs(diffY) > Math.abs(diffX)) {
           if (diffY > 60) {
-            closeFullPlayer();
+            history.back(); // إغلاق بالرجوع للخلف برمجياً
           }
         } else {
           if (Math.abs(diffX) > 50) {
@@ -560,6 +590,7 @@
       const track = tracks.find(t => t.id === id);
       document.getElementById('commentsModalTitle').textContent = `تعليقات: ${track ? track.title : ''}`;
       renderCommentsList();
+      history.pushState({ modal: 'comments' }, '');
       document.getElementById('commentsModal').classList.remove('hidden');
     }
     function closeCommentsModal() {
@@ -598,7 +629,11 @@
       renderCommentsList();
     }
 
-    function openQueueModal() { document.getElementById('queueModal').classList.remove('hidden'); renderQueueList(); }
+    function openQueueModal() { 
+      history.pushState({ modal: 'queue' }, '');
+      document.getElementById('queueModal').classList.remove('hidden'); 
+      renderQueueList(); 
+    }
     function closeQueueModal() { document.getElementById('queueModal').classList.add('hidden'); }
     function renderQueueList() {
       const q = document.getElementById('queueList');
@@ -607,12 +642,15 @@
         const div = document.createElement('div');
         div.className = `p-2 rounded-xl text-xs flex justify-between items-center cursor-pointer ${idx === currentTrackIndex ? 'bg-emerald-500/20 text-emerald-400 font-bold' : 'hover:bg-slate-800'}`;
         div.innerHTML = `<span>${t.title} - ${t.artist}</span>`;
-        div.onclick = () => { playTrackById(t.id); closeQueueModal(); };
+        div.onclick = () => { playTrackById(t.id); history.back(); };
         q.appendChild(div);
       });
     }
 
-    function openSleepModal() { document.getElementById('sleepModal').classList.remove('hidden'); }
+    function openSleepModal() { 
+      history.pushState({ modal: 'sleep' }, '');
+      document.getElementById('sleepModal').classList.remove('hidden'); 
+    }
     function closeSleepModal() { document.getElementById('sleepModal').classList.add('hidden'); }
     
     let sleepTimerRef = null;
@@ -631,7 +669,7 @@
       } else {
         badge.classList.add('hidden');
       }
-      closeSleepModal();
+      history.back();
     }
 
     function toggleTheme() {
@@ -734,7 +772,7 @@
       }
     }
 
-    // نظام الاستماع الجماعي المحدث والمصحح
+    // نظام الاستماع الجماعي المحدث
     let peer = null;
     let conn = null;
     let groupRoomCode = null;
@@ -756,7 +794,6 @@
 
     function createGroupRoom() {
       if (peer) { peer.destroy(); }
-      // إنشاء معرف غرفة قصير وسهل التنسيق
       const customId = 'ALAA-' + Math.random().toString(36).substring(2, 6).toUpperCase();
       peer = new Peer(customId);
       
@@ -853,11 +890,14 @@
 
     audio.addEventListener('pause', () => {
       if(isHost && conn && conn.open) {
-        conn.send({ type: 'sync_action', action: 'pause' });
+        conn.send({ type: 'sync_action', action: 'sync_action', action: 'pause' });
       }
     });
 
-    window.onload = initApp;
+    window.onload = initApplication;
+    function initApplication() {
+      initApp();
+    }
   </script>
  </body>
 </html>
