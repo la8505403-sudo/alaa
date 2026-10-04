@@ -21,7 +21,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&amp;display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Tajawal', sans-serif; }
-    #sleepModalBox { touch-action: none; }
+    #sleepModalBox { touch-action: none; position: relative; }
     #fullPlayer { touch-action: pan-y; }
   </style>
  </head>
@@ -63,17 +63,17 @@
     </div>
    </div>
   </div>
-  <!-- نافذة مؤقت النوم -->
-  <div id="sleepModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden pointer-events-none">
-   <div id="sleepModalBox" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl relative pointer-events-auto cursor-grab active:cursor-grabbing">
+  <!-- نافذة مؤقت النوم القابلة للتحريك مع زر القفل -->
+  <div id="sleepModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
+   <div id="sleepModalBox" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl relative cursor-move">
     <div class="flex justify-between items-center select-none" id="sleepModalHeader">
      <div class="flex items-center gap-2">
       <h3 class="font-bold text-sm">مؤقت إيقاف التشغيل</h3>
-      <span class="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">اسحب من هنا</span>
+      <span id="dragHint" class="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">اسحب</span>
      </div>
-     <div class="flex items-center gap-2">
-      <button id="lockSleepBtn" onclick="toggleLockSleepModal()" class="text-slate-400 hover:text-white p-1" title="قفل أو تحريك"><i class="fa-solid fa-lock-open text-xs"></i></button>
-      <button onclick="closeSleepModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
+     <div class="flex items-center gap-1.5">
+      <button id="lockToggleBtn" onclick="toggleModalLock()" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-emerald-500 flex items-center justify-center" title="قفل / فتح التحريك"><i id="lockIcon" class="fa-solid fa-lock-open text-xs"></i></button>
+      <button onclick="closeSleepModal()" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
      </div>
     </div>
     <div class="grid grid-cols-2 gap-2 text-xs">
@@ -117,11 +117,14 @@
     <button onclick="startVoiceSearch()" class="absolute left-3 text-slate-400 hover:text-emerald-500 p-1" title="بحث صوتي"><i class="fa-solid fa-microphone text-sm"></i></button>
    </div>
    
-   <!-- قسم الاستماع الجماعي الجديد المدمج بالواجهة -->
+   <!-- قسم الاستماع الجماعي المدمج بالواجهة مع عداد المتصلين -->
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm space-y-2">
     <div class="flex items-center justify-between">
      <span class="text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-headphones-simple text-emerald-500"></i> الاستماع الجماعي</span>
-     <span id="groupStatus" class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">غير متصل</span>
+     <div class="flex items-center gap-2">
+      <span id="groupUsersCount" class="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold hidden"><i class="fa-solid fa-users text-[9px] ml-1"></i><span id="usersCountNum">1</span> معك</span>
+      <span id="groupStatus" class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">غير متصل</span>
+     </div>
     </div>
     <div id="groupControlsLobby" class="flex gap-2">
      <button onclick="createGroupRoom()" class="flex-1 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs shadow hover:bg-emerald-400 transition-colors">إنشاء غرفة 🎧</button>
@@ -220,589 +223,616 @@
       { id: 9, title: "احببتها منذ الصغر", artist: "إدريس ابكر", category: "إدريس ابكر", url: "https://files.catbox.moe/95m7s8.mp3", duration: "--:--" }
     ];
 
+    let tracks = [...initialTracks];
+    let currentTrackIndex = 0;
+    let isPlaying = false;
+    let isShuffle = false;
+    let isRepeat = false;
+    let viewMode = 'all';
+    let currentCategory = 'all';
     let currentUser = localStorage.getItem('current_user') || null;
-    let favorites = [];
-    let historyTracks = [];
+    let favorites = JSON.parse(localStorage.getItem('favorites_' + currentUser)) || [];
+    let historyTracks = JSON.parse(localStorage.getItem('history_' + currentUser)) || [];
     let trackComments = JSON.parse(localStorage.getItem('track_comments')) || {};
     let activeCommentTrackId = null;
 
-    let sleepTimerInterval = null;
-    let sleepTimeRemaining = 0;
-    let isSleepLocked = false;
-    let repeatMode = 0; 
-    let isShuffle = false;
-
-    function loadUserData() {
-      if (currentUser) {
-        favorites = JSON.parse(localStorage.getItem('fav_tracks_' + currentUser)) || [];
-        historyTracks = JSON.parse(localStorage.getItem('history_tracks_' + currentUser)) || [];
-        document.getElementById('userProfileName').innerText = currentUser;
-      } else {
-        favorites = JSON.parse(localStorage.getItem('fav_tracks_guest')) || [];
-        historyTracks = JSON.parse(localStorage.getItem('history_tracks_guest')) || [];
-        document.getElementById('userProfileName').innerText = 'زائر';
-      }
-    }
-
-    function saveUserData() {
-      let key = currentUser ? currentUser : 'guest';
-      localStorage.setItem('fav_tracks_' + key, JSON.stringify(favorites));
-      localStorage.setItem('history_tracks_' + key, JSON.stringify(historyTracks));
-    }
-
-    loadUserData();
-
-    let trackViews = JSON.parse(localStorage.getItem('track_views')) || {};
-    initialTracks.forEach(t => { if(trackViews[t.id] === undefined) trackViews[t.id] = 0; });
-
-    let currentTrackId = null, currentViewMode = 'all', selectedCategory = 'all';
     const audio = document.getElementById('audioPlayer');
+    const playIconMini = document.getElementById('miniPlayIcon');
+    const playIconFull = document.getElementById('fullPlayIcon');
 
-    initialTracks.forEach(t => {
-      let ta = new Audio(t.url);
-      ta.onloadedmetadata = () => {
-        t.duration = Math.floor(ta.duration/60) + ":" + (Math.floor(ta.duration%60)<10?'0':'') + Math.floor(ta.duration%60);
-        renderTracks();
-      };
-    });
-
-    function toggleTheme() {
-      let dark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('site_theme', dark ? 'dark' : 'light');
-      document.getElementById('themeIcon').className = dark ? 'fa-solid fa-sun text-lg' : 'fa-solid fa-moon text-lg';
-    }
-    if(document.documentElement.classList.contains('dark')) {
-      document.getElementById('themeIcon').className = 'fa-solid fa-sun text-lg';
-    }
-
-    let peer = null;
-    let peerConn = null;
-    let isGroupHost = false;
-
-    function updateGroupStatusText(text, badgeClass = "text-slate-400 bg-slate-100 dark:bg-slate-800") {
-      const statusEl = document.getElementById('groupStatus');
-      if (statusEl) {
-        statusEl.innerText = text;
-        statusEl.className = `text-[10px] px-2 py-0.5 rounded-full ${badgeClass}`;
-      }
-    }
-
-    function createGroupRoom() {
-      isGroupHost = true;
-      const randomCode = 'room-' + Math.floor(1000 + Math.random() * 9000);
-      
-      if(peer) { peer.destroy(); }
-      peer = new Peer(randomCode);
-
-      peer.on('open', (id) => {
-        document.getElementById('groupControlsLobby').style.display = 'none';
-        document.getElementById('groupActiveInfo').style.display = 'block';
-        document.getElementById('groupRoomDisplayCode').innerText = id;
-        updateGroupStatusText("مضيف الغرفة 🟢", "text-emerald-500 bg-emerald-500/10");
-      });
-
-      peer.on('connection', (connection) => {
-        peerConn = connection;
-        setupPeerConnectionEvents();
-        updateGroupStatusText("متصل مع صديق 🎧", "text-emerald-500 bg-emerald-500/10");
-        
-        setTimeout(() => {
-          sendGroupSync('sync-state', {
-            src: audio.src,
-            currentTime: audio.currentTime,
-            isPlaying: !audio.paused,
-            trackId: currentTrackId
-          });
-        }, 800);
-      });
-    }
-
-    function joinGroupRoom() {
-      const codeInput = document.getElementById('groupJoinInput').value.trim();
-      if (!codeInput) {
-        alert('الرجاء إدخال كود الغرفة أولاً!');
-        return;
-      }
-
-      isGroupHost = false;
-      if(peer) { peer.destroy(); }
-      peer = new Peer();
-
-      peer.on('open', () => {
-        peerConn = peer.connect(codeInput);
-        setupPeerConnectionEvents();
-        updateGroupStatusText("جاري الاتصال...", "text-amber-500 bg-amber-500/10");
-      });
-    }
-
-    function setupPeerConnectionEvents() {
-      peerConn.on('open', () => {
-        if (!isGroupHost) {
-          updateGroupStatusText("منضم للغرفة 🟢", "text-emerald-500 bg-emerald-500/10");
-          document.getElementById('groupControlsLobby').style.display = 'none';
-          document.getElementById('groupActiveInfo').style.display = 'block';
-          document.getElementById('groupRoomDisplayCode').innerText = peerConn.peer;
-        }
-      });
-
-      peerConn.on('data', (data) => {
-        if (!isGroupHost) {
-          audio.onplay = null;
-          audio.onpause = null;
-          audio.onseeked = null;
-
-          if (data.type === 'play-track' || data.type === 'sync-state') {
-            if (currentTrackId !== data.trackId) {
-              currentTrackId = data.trackId;
-              let t = initialTracks.find(x => x.id === currentTrackId);
-              if (t) {
-                audio.src = t.url;
-                updatePlayerUI(t);
-              } else if (data.src) {
-                audio.src = data.src;
-              }
-            }
-            audio.currentTime = data.currentTime;
-            if (data.isPlaying) {
-              audio.play().catch(e => console.log(e));
-            } else {
-              audio.pause();
-            }
-          } else if (data.type === 'pause') {
-            audio.pause();
-          } else if (data.type === 'play') {
-            audio.currentTime = data.currentTime;
-            audio.play().catch(e => console.log(e));
-          } else if (data.type === 'seek') {
-            audio.currentTime = data.currentTime;
-          }
-
-          setTimeout(attachGroupHostListeners, 400);
-        }
-      });
-    }
-
-    function sendGroupSync(type, data = {}) {
-      if (peerConn && peerConn.open) {
-        peerConn.send({
-          type: type,
-          currentTime: audio.currentTime,
-          isPlaying: !audio.paused,
-          trackId: currentTrackId,
-          src: audio.src,
-          ...data
-        });
-      }
-    }
-
-    function attachGroupHostListeners() {
-      if (!isGroupHost) return;
-      audio.onplay = () => sendGroupSync('play');
-      audio.onpause = () => sendGroupSync('pause');
-      audio.onseeked = () => sendGroupSync('seek');
-    }
-
-    function renderTracks() {
-      let list = document.getElementById('tracksList');
-      let search = document.getElementById('searchInput').value.toLowerCase();
-      
-      let filtered = initialTracks.filter(t => {
-        let matchCat = (selectedCategory === 'all' || t.category === selectedCategory);
-        let matchSearch = t.title.toLowerCase().includes(search) || t.artist.toLowerCase().includes(search);
-        let matchView = true;
-        if(currentViewMode === 'favorites') matchView = favorites.includes(t.id);
-        if(currentViewMode === 'history') matchView = historyTracks.includes(t.id);
-        return matchCat && matchSearch && matchView;
-      });
-
-      if(filtered.length === 0) {
-        list.innerHTML = `<div class="text-center py-10 text-xs text-slate-400">لا توجد أناشيد مطابقة</div>`;
-        return;
-      }
-
-      list.innerHTML = filtered.map(t => {
-        let isFav = favorites.includes(t.id);
-        let isPlaying = (currentTrackId === t.id && !audio.paused);
-        let viewsCount = trackViews[t.id] || 0;
-        return `
-          <div onclick="playTrack(${t.id})" class="bg-white dark:bg-slate-900 border ${currentTrackId === t.id ? 'border-emerald-500' : 'border-slate-200 dark:border-slate-800'} rounded-2xl p-3 flex items-center justify-between cursor-pointer hover:border-emerald-500/50 transition-all shadow-sm">
-           <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-black border border-slate-800 shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">
-             ${isPlaying ? '<i class="fa-solid fa-volume-high text-emerald-400 animate-pulse text-base"></i>' : 'لا إله إلا الله'}
-            </div>
-            <div>
-             <h4 class="font-bold text-sm ${currentTrackId === t.id ? 'text-emerald-500' : ''}">${t.title}</h4>
-             <p class="text-xs text-slate-400 mt-0.5">${t.artist} • <span class="text-[10px]">${t.duration}</span> • <span class="text-[10px] text-emerald-500 font-medium"><i class="fa-solid fa-headphones text-[9px] ml-0.5"></i> ${viewsCount} استماع</span></p>
-            </div>
-           </div>
-           <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-            <button onclick="openCommentsModal(${t.id})" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-emerald-500 flex items-center justify-center text-xs" title="التعليقات"><i class="fa-regular fa-comment"></i></button>
-            <button onclick="toggleFavorite(${t.id})" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 ${isFav ? 'text-red-500' : 'text-slate-400'} flex items-center justify-center text-xs"><i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i></button>
-           </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function selectCategory(cat) {
-      selectedCategory = cat;
-      document.querySelectorAll('main div.flex.gap-1.5.overflow-x-auto button').forEach(b => {
-        b.className = "px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0";
-      });
-      let activeBtn = document.getElementById('filt_' + cat);
-      if(activeBtn) activeBtn.className = "px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0";
+    // دوال المشغل الأساسية والتحكم
+    function initApp() {
+      updateUserProfileUI();
       renderTracks();
+      setupAudioEvents();
+      loadDurations();
+      setupModalDragging();
+      setupSwipeGestures();
     }
 
-    function setViewMode(mode) {
-      currentViewMode = mode;
-      ['all', 'Fav', 'History'].forEach(m => {
-        let btn = document.getElementById('btn' + m);
-        if(btn) btn.className = "flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5";
-      });
-      let active = mode === 'all' ? 'All' : (mode === 'favorites' ? 'Fav' : 'History');
-      let actBtn = document.getElementById('btn' + active);
-      if(actBtn) actBtn.className = "flex-1 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold flex items-center justify-center gap-1.5";
-      
-      document.getElementById('historyHeader').style.display = (mode === 'history') ? 'flex' : 'none';
-      renderTracks();
-    }
-
-    function playTrack(id) {
-      let t = initialTracks.find(x => x.id === id);
-      if(!t) return;
-      currentTrackId = id;
-      audio.src = t.url;
-      audio.play().catch(e => console.log(e));
-      
-      trackViews[id] = (trackViews[id] || 0) + 1;
-      localStorage.setItem('track_views', JSON.stringify(trackViews));
-
-      updatePlayerUI(t);
-
-      if(!historyTracks.includes(id)) {
-        historyTracks.unshift(id);
-        if(historyTracks.length > 20) historyTracks.pop();
-        saveUserData();
-      }
-
-      if (isGroupHost) {
-        sendGroupSync('play-track', { trackId: id, src: t.url });
-      }
-
-      renderTracks();
-      openFullPlayer();
-    }
-
-    function updatePlayerUI(t) {
-      document.getElementById('miniTitle').innerText = t.title;
-      document.getElementById('miniArtist').innerText = t.artist;
-      document.getElementById('fullTitle').innerText = t.title;
-      document.getElementById('fullArtist').innerText = t.artist;
-      document.getElementById('miniPlayIcon').className = "fa-solid fa-pause";
-      document.getElementById('fullPlayIcon').className = "fa-solid fa-pause";
-      
-      let isFav = favorites.includes(t.id);
-      document.getElementById('fullFavBtn').innerHTML = `<i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular'} fa-star"></i>`;
-    }
-
-    function togglePlay() {
-      if(!currentTrackId && initialTracks.length > 0) {
-        playTrack(initialTracks[0].id);
-        return;
-      }
-      if(audio.paused) {
-        audio.play().catch(e => console.log(e));
-        document.getElementById('miniPlayIcon').className = "fa-solid fa-pause";
-        document.getElementById('fullPlayIcon').className = "fa-solid fa-pause";
-        if (isGroupHost) sendGroupSync('play');
+    function updateUserProfileUI() {
+      const nameSpan = document.getElementById('userProfileName');
+      if (currentUser) {
+        nameSpan.textContent = currentUser;
+        favorites = JSON.parse(localStorage.getItem('favorites_' + currentUser)) || [];
+        historyTracks = JSON.parse(localStorage.getItem('history_' + currentUser)) || [];
       } else {
-        audio.pause();
-        document.getElementById('miniPlayIcon').className = "fa-solid fa-play";
-        document.getElementById('fullPlayIcon').className = "fa-solid fa-play";
-        if (isGroupHost) sendGroupSync('pause');
+        nameSpan.textContent = 'زائر';
+        favorites = [];
+        historyTracks = [];
       }
-      renderTracks();
-    }
-
-    audio.ontimeupdate = () => {
-      if(audio.duration) {
-        let p = (audio.currentTime / audio.duration) * 100;
-        document.getElementById('progressBar').value = p;
-        document.getElementById('miniProgressBar').value = p;
-        
-        let curMin = Math.floor(audio.currentTime / 60);
-        let curSec = Math.floor(audio.currentTime % 60);
-        document.getElementById('currentTime').innerText = curMin + ":" + (curSec < 10 ? '0' : '') + curSec;
-        
-        let durMin = Math.floor(audio.duration / 60);
-        let durSec = Math.floor(audio.duration % 60);
-        document.getElementById('duration').innerText = durMin + ":" + (durSec < 10 ? '0' : '') + durSec;
-      }
-    };
-
-    audio.onended = () => {
-      if(repeatMode === 1) {
-        audio.currentTime = 0;
-        audio.play();
-      } else {
-        nextTrack();
-      }
-    };
-
-    function seekTrack() {
-      if(audio.duration) {
-        audio.currentTime = (document.getElementById('progressBar').value / 100) * audio.duration;
-        if (isGroupHost) sendGroupSync('seek');
-      }
-    }
-
-    function seekTrackMini() {
-      if(audio.duration) {
-        audio.currentTime = (document.getElementById('miniProgressBar').value / 100) * audio.duration;
-        if (isGroupHost) sendGroupSync('seek');
-      }
-    }
-
-    function changeVolume(val) { audio.volume = val; }
-
-    function nextTrack() {
-      let filtered = initialTracks.filter(t => selectedCategory === 'all' || t.category === selectedCategory);
-      let idx = filtered.findIndex(x => x.id === currentTrackId);
-      if(idx !== -1 && idx < filtered.length - 1) {
-        playTrack(filtered[idx + 1].id);
-      } else if(filtered.length > 0) {
-        playTrack(filtered[0].id);
-      }
-    }
-
-    function prevTrack() {
-      let filtered = initialTracks.filter(t => selectedCategory === 'all' || t.category === selectedCategory);
-      let idx = filtered.findIndex(x => x.id === currentTrackId);
-      if(idx > 0) {
-        playTrack(filtered[idx - 1].id);
-      } else if(filtered.length > 0) {
-        playTrack(filtered[filtered.length - 1].id);
-      }
-    }
-
-    function toggleFavorite(id) {
-      let idx = favorites.indexOf(id);
-      if(idx === -1) favorites.push(id);
-      else favorites.splice(idx, 1);
-      saveUserData();
-      renderTracks();
-      if(id === currentTrackId) {
-        let isFav = favorites.includes(id);
-        document.getElementById('fullFavBtn').innerHTML = `<i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular'} fa-star"></i>`;
-      }
-    }
-
-    function toggleCurrentFavorite() {
-      if(currentTrackId) toggleFavorite(currentTrackId);
-    }
-
-    function clearHistory() {
-      historyTracks = [];
-      saveUserData();
-      renderTracks();
-    }
-
-    let isFullPlayerOpen = false;
-
-    function openFullPlayer() {
-      document.getElementById('fullPlayer').classList.remove('translate-y-full');
-      if (!isFullPlayerOpen) {
-        isFullPlayerOpen = true;
-        history.pushState({ playerOpen: true }, "");
-      }
-    }
-
-    function closeFullPlayer() {
-      document.getElementById('fullPlayer').classList.add('translate-y-full');
-      if (isFullPlayerOpen) {
-        isFullPlayerOpen = false;
-        if (history.state && history.state.playerOpen) {
-          history.back();
-        }
-      }
-    }
-
-    window.addEventListener('popstate', (event) => {
-      let fp = document.getElementById('fullPlayer');
-      if (isFullPlayerOpen) {
-        fp.classList.add('translate-y-full');
-        isFullPlayerOpen = false;
-      }
-    });
-
-    // إيماءات اللمس: السحب يميناً/يساراً لتغيير الأغنية + السحب للأسفل لإغلاق النافذة
-    let touchStartX = 0;
-    let touchEndX = 0;
-    let touchStartY = 0;
-    let touchEndY = 0;
-    const swipeCard = document.getElementById('swipeCard');
-    const fullPlayer = document.getElementById('fullPlayer');
-
-    fullPlayer.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-      touchStartY = e.changedTouches[0].screenY;
-    }, {passive: true});
-
-    fullPlayer.addEventListener('touchend', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      touchEndY = e.changedTouches[0].screenY;
-      handleGestures();
-    }, {passive: true});
-
-    function handleGestures() {
-      let diffX = touchEndX - touchStartX;
-      let diffY = touchEndY - touchStartY;
-
-      // إذا كانت الحركة العمودية للأسفل أكبر بوضوح من الأفقية وهي أكثر من 80 بكسل -> أغلق النافذة
-      if (diffY > 80 && Math.abs(diffY) > Math.abs(diffX)) {
-        closeFullPlayer();
-        return;
-      }
-
-      // إيماءات السحب الأفقي (يميناً ويساراً) لتغيير الأغنية
-      if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY)) {
-        if (diffX < 0) {
-          nextTrack(); // سحب لليسار -> التالية
-        } else {
-          prevTrack(); // سحب لليمن -> السابقة
-        }
-      }
-    }
-
-    function openCommentsModal(id) {
-      activeCommentTrackId = id;
-      let t = initialTracks.find(x => x.id === id);
-      document.getElementById('commentsModalTitle').innerText = t ? `تعليقات: ${t.title}` : 'التعليقات';
-      renderCommentsList();
-      document.getElementById('commentsModal').classList.remove('hidden');
-    }
-    function closeCommentsModal() { document.getElementById('commentsModal').classList.add('hidden'); }
-
-    function renderCommentsList() {
-      let container = document.getElementById('commentsList');
-      let list = trackComments[activeCommentTrackId] || [];
-      if(list.length === 0) {
-        container.innerHTML = `<p class="text-slate-400 text-center py-6">لا توجد تعليقات بعد. كن اول من يعلق!</p>`;
-        return;
-      }
-      container.innerHTML = list.map(c => `
-        <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-xl space-y-1">
-         <div class="flex justify-between font-bold text-emerald-500">
-          <span>${c.user}</span>
-          <span class="text-[9px] text-slate-400">${c.date}</span>
-         </div>
-         <p class="text-slate-700 dark:text-slate-300">${c.text}</p>
-        </div>
-      `).join('');
-    }
-
-    function submitComment() {
-      let text = document.getElementById('commentInput').value.trim();
-      if(!text) return;
-      if(!trackComments[activeCommentTrackId]) trackComments[activeCommentTrackId] = [];
-      trackComments[activeCommentTrackId].push({
-        user: currentUser ? currentUser : 'زائر',
-        text: text,
-        date: new Date().toLocaleDateString()
-      });
-      localStorage.setItem('track_comments', JSON.stringify(trackComments));
-      document.getElementById('commentInput').value = '';
-      renderCommentsList();
     }
 
     function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
     function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
+
     function handleLogin() {
-      let name = document.getElementById('authUsername').value.trim();
-      if(!name) return;
-      currentUser = name;
-      localStorage.setItem('current_user', currentUser);
-      loadUserData();
-      closeAuthModal();
+      const val = document.getElementById('authUsername').value.trim();
+      if(val) {
+        currentUser = val;
+        localStorage.setItem('current_user', currentUser);
+        updateUserProfileUI();
+        closeAuthModal();
+        renderTracks();
+      }
+    }
+
+    function renderTracks() {
+      const listEl = document.getElementById('tracksList');
+      const searchVal = document.getElementById('searchInput').value.toLowerCase();
+      listEl.innerHTML = '';
+
+      let sourceList = tracks;
+      if (viewMode === 'favorites') {
+        sourceList = tracks.filter(t => favorites.includes(t.id));
+      } else if (viewMode === 'history') {
+        sourceList = historyTracks.map(id => tracks.find(t => t.id === id)).filter(Boolean);
+      }
+
+      const filtered = sourceList.filter(t => {
+        const matchesCat = (currentCategory === 'all' || t.category === currentCategory);
+        const matchesSearch = t.title.toLowerCase().includes(searchVal) || t.artist.toLowerCase().includes(searchVal);
+        return matchesCat && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">لا توجد أناشيد مطابقة للعرض</div>`;
+        return;
+      }
+
+      filtered.forEach(track => {
+        const isFav = favorites.includes(track.id);
+        const isCurrent = tracks[currentTrackIndex].id === track.id;
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-2xl border transition-all flex items-center justify-between ${isCurrent ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`;
+        card.innerHTML = `
+          <div class="flex items-center gap-3 overflow-hidden cursor-pointer flex-1" onclick="playTrackById(${track.id})">
+            <div class="w-11 h-11 rounded-xl overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">لا إله إلا الله</div>
+            <div class="truncate">
+              <h4 class="font-bold text-sm truncate ${isCurrent ? 'text-emerald-500' : ''}">${track.title}</h4>
+              <p class="text-xs text-slate-400 truncate">${track.artist} • ${track.duration || '--:--'}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button onclick="openComments(${track.id})" class="text-slate-400 hover:text-emerald-500 p-2 text-xs" title="التعليقات"><i class="fa-regular fa-comment"></i></button>
+            <button onclick="toggleFavorite(${track.id})" class="text-sm p-2 ${isFav ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}"><i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i></button>
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    function playTrackById(id) {
+      const idx = tracks.findIndex(t => t.id === id);
+      if (idx !== -1) {
+        currentTrackIndex = idx;
+        loadAndPlayCurrentTrack();
+        addToHistory(id);
+        openFullPlayer(); // فتح المشغل الكامل فوراً عند النقر على الأنشودة
+      }
+    }
+
+    function loadAndPlayCurrentTrack() {
+      const track = tracks[currentTrackIndex];
+      audio.src = track.url;
+      audio.play().then(() => {
+        isPlaying = true;
+        updatePlayButtons();
+        updatePlayerUI();
+      }).catch(e => console.log("Play error:", e));
+    }
+
+    function togglePlay() {
+      if (!audio.src) {
+        playTrackById(tracks[0].id);
+        return;
+      }
+      if (isPlaying) {
+        audio.pause();
+        isPlaying = false;
+      } else {
+        audio.play();
+        isPlaying = true;
+      }
+      updatePlayButtons();
+    }
+
+    function updatePlayButtons() {
+      playIconMini.className = isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+      playIconFull.className = isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+    }
+
+    function updatePlayerUI() {
+      const track = tracks[currentTrackIndex];
+      document.getElementById('miniTitle').textContent = track.title;
+      document.getElementById('miniArtist').textContent = track.artist;
+      document.getElementById('fullTitle').textContent = track.title;
+      document.getElementById('fullArtist').textContent = track.artist;
+
+      const isFav = favorites.includes(track.id);
+      const favBtn = document.getElementById('fullFavBtn');
+      favBtn.innerHTML = `<i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular'} fa-star"></i>`;
       renderTracks();
     }
 
-    function openSleepModal() { document.getElementById('sleepModal').classList.remove('hidden'); }
-    function closeSleepModal() { document.getElementById('sleepModal').classList.add('hidden'); }
-    function setSleepTimer(mins) {
-      clearInterval(sleepTimerInterval);
-      if(mins === 0) {
-        document.getElementById('sleepBadge').classList.add('hidden');
-        closeSleepModal();
-        return;
-      }
-      sleepTimeRemaining = mins * 60;
-      document.getElementById('sleepBadge').innerText = mins;
-      document.getElementById('sleepBadge').classList.remove('hidden');
-      closeSleepModal();
-      sleepTimerInterval = setInterval(() => {
-        sleepTimeRemaining--;
-        if(sleepTimeRemaining <= 0) {
-          clearInterval(sleepTimerInterval);
-          audio.pause();
-          document.getElementById('miniPlayIcon').className = "fa-solid fa-play";
-          document.getElementById('fullPlayIcon').className = "fa-solid fa-play";
-          document.getElementById('sleepBadge').classList.add('hidden');
+    function setupAudioEvents() {
+      audio.addEventListener('timeupdate', () => {
+        if (!isNaN(audio.duration)) {
+          const progress = (audio.currentTime / audio.duration) * 100;
+          document.getElementById('progressBar').value = progress;
+          document.getElementById('miniProgressBar').value = progress;
+          document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
+          document.getElementById('duration').textContent = formatTime(audio.duration);
         }
-      }, 1000);
+      });
+
+      audio.addEventListener('ended', () => {
+        if (isRepeat) {
+          audio.currentTime = 0;
+          audio.play();
+        } else {
+          nextTrack();
+        }
+      });
     }
 
-    function toggleRepeat() {
-      repeatMode = (repeatMode + 1) % 2;
-      let btn = document.getElementById('repeatBtn');
-      btn.style.color = repeatMode === 1 ? '#10b981' : '';
+    function formatTime(secs) {
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function seekTrack() {
+      const val = document.getElementById('progressBar').value;
+      audio.currentTime = (val / 100) * audio.duration;
+    }
+
+    function seekTrackMini() {
+      const val = document.getElementById('miniProgressBar').value;
+      audio.currentTime = (val / 100) * audio.duration;
+    }
+
+    function changeVolume(val) {
+      audio.volume = val;
+    }
+
+    function nextTrack() {
+      if (isShuffle) {
+        currentTrackIndex = Math.floor(Math.random() * tracks.length);
+      } else {
+        currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+      }
+      loadAndPlayCurrentTrack();
+      addToHistory(tracks[currentTrackIndex].id);
+    }
+
+    function prevTrack() {
+      currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+      loadAndPlayCurrentTrack();
+      addToHistory(tracks[currentTrackIndex].id);
     }
 
     function toggleShuffle() {
       isShuffle = !isShuffle;
-      let btn = document.getElementById('shuffleBtn');
-      btn.style.color = isShuffle ? '#10b981' : '';
+      document.getElementById('shuffleBtn').classList.toggle('text-emerald-400', isShuffle);
     }
 
-    function openQueueModal() { document.getElementById('queueModal').classList.remove('hidden'); }
-    function closeQueueModal() { document.getElementById('queueModal').classList.add('hidden'); }
-    function shareCurrentTrack() {
-      if(navigator.share && currentTrackId) {
-        let t = initialTracks.find(x => x.id === currentTrackId);
-        navigator.share({ title: t.title, url: t.url });
+    function toggleRepeat() {
+      isRepeat = !isRepeat;
+      document.getElementById('repeatBtn').classList.toggle('text-emerald-400', isRepeat);
+    }
+
+    function toggleFavorite(id) {
+      if (!currentUser) {
+        openAuthModal();
+        return;
+      }
+      const idx = favorites.indexOf(id);
+      if (idx > -1) {
+        favorites.splice(idx, 1);
       } else {
-        alert('المشاركة غير متوفرة في متصفحك');
+        favorites.push(id);
+      }
+      localStorage.setItem('favorites_' + currentUser, JSON.stringify(favorites));
+      renderTracks();
+      updatePlayerUI();
+    }
+
+    function toggleCurrentFavorite() {
+      if (tracks[currentTrackIndex]) {
+        toggleFavorite(tracks[currentTrackIndex].id);
       }
     }
-    function downloadCurrentTrack() {
-      if(currentTrackId) {
-        let t = initialTracks.find(x => x.id === currentTrackId);
-        let a = document.createElement('a');
-        a.href = t.url;
-        a.download = t.title + '.mp3';
-        a.click();
+
+    function addToHistory(id) {
+      if (!currentUser) return;
+      historyTracks = historyTracks.filter(item => item !== id);
+      historyTracks.unshift(id);
+      if (historyTracks.length > 20) historyTracks.pop();
+      localStorage.setItem('history_' + currentUser, JSON.stringify(historyTracks));
+    }
+
+    function setViewMode(mode) {
+      viewMode = mode;
+      document.getElementById('btnAll').className = mode === 'all' ? 'flex-1 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold' : 'flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800';
+      document.getElementById('btnFav').className = mode === 'favorites' ? 'flex-1 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold flex items-center justify-center gap-1.5' : 'flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5';
+      document.getElementById('btnHistory').className = mode === 'history' ? 'flex-1 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold flex items-center justify-center gap-1.5' : 'flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5';
+      
+      document.getElementById('historyHeader').classList.toggle('hidden', mode !== 'history');
+      renderTracks();
+    }
+
+    function selectCategory(cat) {
+      currentCategory = cat;
+      ['all', 'الشيخ سعد الغامدي', 'ابو مصعب', 'نايف الشرهان', 'إدريس ابكر', 'أسامة'].forEach(c => {
+        const btn = document.getElementById('filt_' + c);
+        if (btn) {
+          if (c === cat) {
+            btn.className = 'px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0';
+          }
+        }
+      });
+      renderTracks();
+    }
+
+    function clearHistory() {
+      if(!currentUser) return;
+      historyTracks = [];
+      localStorage.setItem('history_' + currentUser, JSON.stringify(historyTracks));
+      renderTracks();
+    }
+
+    function openFullPlayer() {
+      document.getElementById('fullPlayer').classList.remove('translate-y-full');
+    }
+    function closeFullPlayer() {
+      document.getElementById('fullPlayer').classList.add('translate-y-full');
+    }
+
+    // إعداد إيماءات اللمس (السحب يميناً/يساراً لتغيير الأنشودة، ولأسفل لإغلاق المشغل)
+    function setupSwipeGestures() {
+      const swipeCard = document.getElementById('swipeCard');
+      const fullPlayer = document.getElementById('fullPlayer');
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchEndX = 0;
+      let touchEndY = 0;
+
+      swipeCard.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, { passive: true });
+
+      swipeCard.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipeGesture();
+      }, { passive: true });
+
+      function handleSwipeGesture() {
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+
+        // التحقق مما إذا كانت الحركة لأسفل بشكل أساسي
+        if (Math.abs(diffY) > Math.abs(diffX)) {
+          if (diffY > 60) {
+            closeFullPlayer(); // السحب للأسفل لإغلاق المشغل
+          }
+        } else {
+          // الحركة أفقية (يمين أو يسار)
+          if (Math.abs(diffX) > 50) {
+            if (diffX > 0) {
+              prevTrack(); // السحب لليسار/اليمين حسب الاتجاه
+            } else {
+              nextTrack();
+            }
+          }
+        }
       }
     }
+
+    function openComments(id) {
+      activeCommentTrackId = id;
+      const track = tracks.find(t => t.id === id);
+      document.getElementById('commentsModalTitle').textContent = `تعليقات: ${track ? track.title : ''}`;
+      renderCommentsList();
+      document.getElementById('commentsModal').classList.remove('hidden');
+    }
+    function closeCommentsModal() {
+      document.getElementById('commentsModal').classList.add('hidden');
+    }
+
+    function renderCommentsList() {
+      const container = document.getElementById('commentsList');
+      container.innerHTML = '';
+      const list = trackComments[activeCommentTrackId] || [];
+      if(list.length === 0) {
+        container.innerHTML = '<p class="text-slate-400 text-center py-6">لا توجد تعليقات بعد، كن أول المعلقين!</p>';
+        return;
+      }
+      list.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'bg-slate-100 dark:bg-slate-950 p-2.5 rounded-xl space-y-1';
+        div.innerHTML = `<div class="flex justify-between font-bold text-emerald-500"><span>${c.user}</span><span class="text-[9px] text-slate-400">${c.date}</span></div><p class="text-slate-200">${c.text}</p>`;
+        container.appendChild(div);
+      });
+    }
+
+    function submitComment() {
+      if(!currentUser) { openAuthModal(); return; }
+      const input = document.getElementById('commentInput');
+      const text = input.value.trim();
+      if(!text) return;
+      if(!trackComments[activeCommentTrackId]) trackComments[activeCommentTrackId] = [];
+      trackComments[activeCommentTrackId].push({
+        user: currentUser,
+        text: text,
+        date: new Date().toLocaleDateString('ar-SA')
+      });
+      localStorage.setItem('track_comments', JSON.stringify(trackComments));
+      input.value = '';
+      renderCommentsList();
+    }
+
+    function openQueueModal() { document.getElementById('queueModal').classList.remove('hidden'); renderQueueList(); }
+    function closeQueueModal() { document.getElementById('queueModal').classList.add('hidden'); }
+    function renderQueueList() {
+      const q = document.getElementById('queueList');
+      q.innerHTML = '';
+      tracks.forEach((t, idx) => {
+        const div = document.createElement('div');
+        div.className = `p-2 rounded-xl text-xs flex justify-between items-center cursor-pointer ${idx === currentTrackIndex ? 'bg-emerald-500/20 text-emerald-400 font-bold' : 'hover:bg-slate-800'}`;
+        div.innerHTML = `<span>${t.title} - ${t.artist}</span>`;
+        div.onclick = () => { playTrackById(t.id); closeQueueModal(); };
+        q.appendChild(div);
+      });
+    }
+
+    function openSleepModal() { document.getElementById('sleepModal').classList.remove('hidden'); }
+    function closeSleepModal() { document.getElementById('sleepModal').classList.add('hidden'); }
+    
+    let sleepTimerRef = null;
+    function setSleepTimer(mins) {
+      if(sleepTimerRef) clearTimeout(sleepTimerRef);
+      const badge = document.getElementById('sleepBadge');
+      if(mins > 0) {
+        badge.textContent = mins;
+        badge.classList.remove('hidden');
+        sleepTimerRef = setTimeout(() => {
+          audio.pause();
+          isPlaying = false;
+          updatePlayButtons();
+          badge.classList.add('hidden');
+        }, mins * 60 * 1000);
+      } else {
+        badge.classList.add('hidden');
+      }
+      closeSleepModal();
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('site_theme', isDark ? 'dark' : 'light');
+      document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun text-lg' : 'fa-solid fa-moon text-lg';
+    }
+
     function startVoiceSearch() {
-      if('webkitSpeechRecognition' in window) {
-        let rec = new webkitSpeechRecognition();
-        rec.lang = 'ar-SA';
-        rec.onresult = (e) => {
-          document.getElementById('searchInput').value = e.results[0][0].transcript;
+      if (!('webkitSpeechRecognition' in window)) { alert('المتصفح لا يدعم البحث الصوتي'); return; }
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = 'ar-SA';
+      recognition.onresult = (e) => {
+        document.getElementById('searchInput').value = e.results[0][0].transcript;
+        renderTracks();
+      };
+      recognition.start();
+    }
+
+    function shareCurrentTrack() {
+      const t = tracks[currentTrackIndex];
+      if(navigator.share) {
+        navigator.share({ title: t.title, text: `استمع إلى أنشودة ${t.title} للشيخ/المنشد ${t.artist}`, url: t.url });
+      } else {
+        navigator.clipboard.writeText(t.url);
+        alert('تم نسخ رابط الأنشودة');
+      }
+    }
+
+    function downloadCurrentTrack() {
+      const t = tracks[currentTrackIndex];
+      const a = document.createElement('a');
+      a.href = t.url;
+      a.download = t.title + '.mp3';
+      a.target = '_blank';
+      a.click();
+    }
+
+    function loadDurations() {
+      tracks.forEach((t, i) => {
+        const a = new Audio(t.url);
+        a.onloadedmetadata = () => {
+          t.duration = formatTime(a.duration);
           renderTracks();
         };
-        rec.start();
+      });
+    }
+
+    // دوال تحريك نافذة مؤقت النوم والقفل
+    let isModalLocked = false;
+    function toggleModalLock() {
+      isModalLocked = !isModalLocked;
+      const icon = document.getElementById('lockIcon');
+      const hint = document.getElementById('dragHint');
+      const box = document.getElementById('sleepModalBox');
+      if (isModalLocked) {
+        icon.className = "fa-solid fa-lock text-xs text-emerald-500";
+        hint.textContent = "مقفل";
+        box.style.transform = "translate(0px, 0px)";
       } else {
-        alert('البحث الصوتي غير مدعوم في متصفحك');
+        icon.className = "fa-solid fa-lock-open text-xs";
+        hint.textContent = "اسحب";
       }
     }
 
-    setTimeout(() => {
-      attachGroupHostListeners();
-    }, 500);
+    function setupModalDragging() {
+      const box = document.getElementById('sleepModalBox');
+      const header = document.getElementById('sleepModalHeader');
+      let isDragging = false;
+      let startX = 0, startY = 0, currentX = 0, currentY = 0;
 
-    renderTracks();
+      header.addEventListener('mousedown', dragStart);
+      header.addEventListener('touchstart', dragStart, { passive: true });
+
+      document.addEventListener('mousemove', drag);
+      document.addEventListener('touchmove', drag, { passive: true });
+
+      document.addEventListener('mouseup', dragEnd);
+      document.addEventListener('touchend', dragEnd);
+
+      function dragStart(e) {
+        if (isModalLocked) return;
+        isDragging = true;
+        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        startX = clientX - currentX;
+        startY = clientY - currentY;
+      }
+
+      function drag(e) {
+        if (!isDragging || isModalLocked) return;
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        currentX = clientX - startX;
+        currentY = clientY - startY;
+        box.style.transform = `translate(${currentX}px, ${currentY}px)`;
+      }
+
+      function dragEnd() {
+        isDragging = false;
+      }
+    }
+
+    // تهيئة نظام الاستماع الجماعي المباشر عبر PeerJS مع تحديث العداد
+    let peer = null;
+    let conn = null;
+    let groupRoomCode = null;
+    let isHost = false;
+    let connectedPeersCount = 1; // يبدأ بالمستخدم نفسه
+
+    function updateGroupUsersCountUI() {
+      const countSpan = document.getElementById('usersCountNum');
+      const badge = document.getElementById('groupUsersCount');
+      if (countSpan) countSpan.textContent = connectedPeersCount;
+      if (badge) {
+        if (groupRoomCode) {
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+    }
+
+    function createGroupRoom() {
+      peer = new Peer();
+      peer.on('open', (id) => {
+        groupRoomCode = id.substring(0, 6).toUpperCase();
+        isHost = true;
+        connectedPeersCount = 1;
+        updateGroupUsersCountUI();
+        document.getElementById('groupStatus').textContent = 'غرفة نشطة (مضيف)';
+        document.getElementById('groupStatus').className = 'text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold';
+        document.getElementById('groupControlsLobby').classList.add('hidden');
+        document.getElementById('groupActiveInfo').classList.remove('hidden');
+        document.getElementById('groupRoomDisplayCode').textContent = groupRoomCode;
+      });
+
+      peer.on('connection', (connection) => {
+        conn = connection;
+        connectedPeersCount++;
+        updateGroupUsersCountUI();
+        setupPeerConnection();
+      });
+    }
+
+    function joinGroupRoom() {
+      const code = document.getElementById('groupJoinInput').value.trim().toLowerCase();
+      if(!code) { alert('الرجاء إدخال كود الغرفة'); return; }
+      
+      peer = new Peer();
+      peer.on('open', (id) => {
+        conn = peer.connect(code);
+        isHost = false;
+        setupPeerConnection();
+      });
+    }
+
+    function setupPeerConnection() {
+      conn.on('open', () => {
+        document.getElementById('groupStatus').textContent = 'متصل بالغرفة الجماعية';
+        document.getElementById('groupStatus').className = 'text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold';
+        document.getElementById('groupControlsLobby').classList.add('hidden');
+        document.getElementById('groupActiveInfo').classList.remove('hidden');
+        if(isHost) {
+          document.getElementById('groupRoomDisplayCode').textContent = groupRoomCode;
+        } else {
+          connectedPeersCount = 2; // كمستمع انضم لمضيف
+          updateGroupUsersCountUI();
+          document.getElementById('groupRoomDisplayCode').textContent = "متصل بمضيف";
+        }
+      });
+
+      conn.on('data', (data) => {
+        if(data.type === 'play_track') {
+          playTrackById(data.trackId);
+          audio.currentTime = data.currentTime;
+        } else if(data.type === 'sync_action') {
+          if(data.action === 'play') audio.play();
+          if(data.action === 'pause') audio.pause();
+        }
+      });
+
+      conn.on('close', () => {
+        document.getElementById('groupStatus').textContent = 'انقطع الاتصال';
+        connectedPeersCount = 1;
+        updateGroupUsersCountUI();
+      });
+    }
+
+    // إرسال التحديثات إذا كان مضيفاً
+    audio.addEventListener('play', () => {
+      if(isHost && conn && conn.open) {
+        conn.send({ type: 'sync_action', action: 'play' });
+      }
+    });
+
+    audio.addEventListener('pause', () => {
+      if(isHost && conn && conn.open) {
+        conn.send({ type: 'sync_action', action: 'sync_action', action: 'pause' });
+      }
+    });
+
+    window.onload = initApp;
   </script>
  </body>
 </html>
