@@ -20,6 +20,7 @@
   <style>
     body { font-family: 'Tajawal', sans-serif; }
     #sleepModalBox { touch-action: none; }
+    #fullPlayer { touch-action: pan-y; }
   </style>
  </head>
  <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-28 select-none">
@@ -30,7 +31,7 @@
     <div class="text-center space-y-1 pt-2">
      <div class="w-12 h-12 rounded-xl bg-black border border-slate-800 flex items-center justify-center font-bold text-[10px] text-white p-1 text-center leading-tight mx-auto mb-2">لا إله إلا الله</div>
      <h2 class="font-bold text-lg">تسجيل الدخول للمنصة</h2>
-     <p class="text-xs text-slate-400">سجل دخولك لحفظ السجل والمفضلة الخاصة بك</p>
+     <p class="text-xs text-slate-400">سجل دخولك لحفظ السجل، المفضلة، وتعليقاتك</p>
     </div>
     <div class="space-y-3">
      <div>
@@ -40,6 +41,30 @@
       <label class="text-xs text-slate-400 mb-1 block">كلمة المرور</label> <input type="password" id="authPassword" placeholder="••••••••" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500">
      </div>
      <button onclick="handleLogin()" class="w-full py-3 rounded-xl bg-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20">دخول / إنشاء حساب</button>
+    </div>
+   </div>
+  </div>
+
+  <!-- نافذة التعليقات التفاعلية (جديد) -->
+  <div id="commentsModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
+   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative flex flex-col max-h-[85vh]">
+    <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+     <div>
+      <h3 class="font-bold text-sm" id="commentsModalTitle">تعليقات الأنشودة</h3>
+      <p class="text-[10px] text-slate-400">شاركنا رأيك أو انطباعك بكل احترام</p>
+     </div>
+     <button onclick="closeCommentsModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></button>
+    </div>
+    
+    <!-- قائمة التعليقات -->
+    <div id="commentsList" class="overflow-y-auto space-y-3 flex-1 pr-1 text-xs min-h-[150px] max-h-[350px]">
+     <!-- تعليقات تظهر هنا -->
+    </div>
+
+    <!-- إضافة تعليق جديد -->
+    <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+     <input type="text" id="commentInput" placeholder="اكتب تعليقاً..." class="flex-1 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-emerald-500">
+     <button onclick="submitComment()" class="bg-emerald-500 text-slate-950 px-4 rounded-xl font-bold text-xs shadow hover:bg-emerald-400 transition-colors">إرسال</button>
     </div>
    </div>
   </div>
@@ -137,14 +162,13 @@
    </div>
   </div>
 
-  <!-- المشغل الكامل -->
+  <!-- المشغل الكامل مع دعم الإيماءات -->
   <div id="fullPlayer" class="fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 transition-transform duration-300 translate-y-full max-w-md mx-auto text-white">
    <div class="flex justify-between items-center pt-2">
     <button onclick="openSleepModal()" class="text-slate-300 text-lg relative p-2" title="مؤقت النوم"><i class="fa-solid fa-clock"></i><span id="sleepBadge" class="absolute top-0 right-0 text-[9px] bg-emerald-500 text-slate-950 px-1 rounded-full hidden">0</span></button>
     <button onclick="closeFullPlayer()" class="text-2xl p-1"><i class="fa-solid fa-chevron-down"></i></button>
    </div>
    <div class="my-auto py-2 flex flex-col items-center w-full">
-    <!-- غلاف يعرض عبارة لا إله إلا الله بشكل واضح وهادئ -->
     <div class="relative w-64 h-64 rounded-3xl overflow-hidden border border-slate-800 bg-black shadow-2xl my-4 flex flex-col items-center justify-center text-center p-6">
      <span class="text-2xl font-bold text-white select-none">لا إله إلا الله</span>
     </div>
@@ -198,6 +222,9 @@
     let currentUser = localStorage.getItem('current_user') || null;
     let favorites = [];
     let historyTracks = [];
+    let trackComments = JSON.parse(localStorage.getItem('track_comments')) || {};
+    let activeCommentTrackId = null;
+
     let sleepTimerInterval = null;
     let sleepTimeRemaining = 0;
     let isSleepLocked = false;
@@ -248,6 +275,61 @@
     
     function openSleepModal() { document.getElementById('sleepModal').classList.remove('hidden'); }
     function closeSleepModal() { document.getElementById('sleepModal').classList.add('hidden'); }
+
+    // إدارة التعليقات
+    function openCommentsModal(id) {
+      activeCommentTrackId = id;
+      let t = initialTracks.find(x => x.id === id);
+      if(!t) return;
+      document.getElementById('commentsModalTitle').innerText = 'تعليقات: ' + t.title;
+      renderCommentsList();
+      document.getElementById('commentsModal').classList.remove('hidden');
+    }
+
+    function closeCommentsModal() {
+      document.getElementById('commentsModal').classList.add('hidden');
+      activeCommentTrackId = null;
+    }
+
+    function renderCommentsList() {
+      let container = document.getElementById('commentsList');
+      container.innerHTML = '';
+      if (!activeCommentTrackId) return;
+      let comments = trackComments[activeCommentTrackId] || [];
+      if (comments.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-slate-400">لا توجد تعليقات بعد، كن أول من يعلق!</div>`;
+        return;
+      }
+      comments.forEach(c => {
+        container.innerHTML += `
+          <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl space-y-1">
+            <div class="flex justify-between items-center text-[10px] text-slate-400">
+              <span class="font-bold text-emerald-500">${c.user}</span>
+              <span>${c.date}</span>
+            </div>
+            <p class="text-slate-700 dark:text-slate-300">${c.text}</p>
+          </div>
+        `;
+      });
+    }
+
+    function submitComment() {
+      let input = document.getElementById('commentInput');
+      let text = input.value.trim();
+      if (!text) return;
+      let username = currentUser ? currentUser : 'زائر';
+      if (!trackComments[activeCommentTrackId]) {
+        trackComments[activeCommentTrackId] = [];
+      }
+      let now = new Date();
+      let dateStr = now.toLocaleDateString('ar-SA') + ' ' + now.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
+      
+      trackComments[activeCommentTrackId].push({ user: username, text: text, date: dateStr });
+      localStorage.setItem('track_comments', JSON.stringify(trackComments));
+      input.value = '';
+      renderCommentsList();
+      renderTracks();
+    }
 
     function toggleLockSleepModal() {
       isSleepLocked = !isSleepLocked;
@@ -380,24 +462,35 @@
 
       filtered.forEach(t => {
         let isFav = favorites.includes(t.id);
+        let commentsCount = (trackComments[t.id] || []).length;
         list.innerHTML += `
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex items-center justify-between shadow-sm cursor-pointer" onclick="playTrack(${t.id}); openFullPlayer();">
-            <div class="flex items-center gap-3 flex-1">
-              <div class="w-12 h-12 rounded-lg overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">
-                لا إله إلا الله
-              </div>
-              <div>
-                <h3 class="font-bold text-sm">${t.title}</h3>
-                <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
-                  <span>${t.artist}</span>
-                  <span class="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full"><i class="fa-solid fa-eye"></i> ${trackViews[t.id] || 0}</span>
-                  <span class="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">${t.duration}</span>
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 shadow-sm">
+            <div class="flex items-center justify-between cursor-pointer" onclick="playTrack(${t.id}); openFullPlayer();">
+              <div class="flex items-center gap-3 flex-1">
+                <div class="w-12 h-12 rounded-lg overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">
+                  لا إله إلا الله
+                </div>
+                <div>
+                  <h3 class="font-bold text-sm">${t.title}</h3>
+                  <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
+                    <span>${t.artist}</span>
+                    <span class="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full"><i class="fa-solid fa-eye"></i> ${trackViews[t.id] || 0}</span>
+                    <span class="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">${t.duration}</span>
+                  </div>
                 </div>
               </div>
+              <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                <a href="${t.url}" download class="p-2 text-slate-400 hover:text-emerald-500"><i class="fa-solid fa-download text-xs"></i></a>
+                <button onclick="toggleFavorite(event, ${t.id})" class="p-2 text-lg"><i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular text-slate-400'} fa-heart"></i></button>
+              </div>
             </div>
-            <div class="flex items-center gap-1" onclick="event.stopPropagation()">
-              <a href="${t.url}" download class="p-2 text-slate-400 hover:text-emerald-500"><i class="fa-solid fa-download text-xs"></i></a>
-              <button onclick="toggleFavorite(event, ${t.id})" class="p-2 text-lg"><i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular text-slate-400'} fa-heart"></i></button>
+            <!-- زر التعليقات التفاعلية -->
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/60 text-xs">
+              <button onclick="openCommentsModal(${t.id})" class="flex items-center gap-1.5 text-slate-400 hover:text-emerald-500 transition-colors">
+                <i class="fa-regular fa-comment"></i>
+                <span>التعليقات (${commentsCount})</span>
+              </button>
+              <span class="text-[10px] text-slate-400">انقر للتشغيل والاستماع</span>
             </div>
           </div>`;
       });
@@ -451,6 +544,36 @@
     function closeFullPlayer() { 
       document.getElementById('fullPlayer').classList.add('translate-y-full'); 
     }
+
+    // إيماءات اللمس للمشغل الكامل
+    const fullPlayerEl = document.getElementById('fullPlayer');
+    let touchStartX = 0, touchStartY = 0;
+
+    fullPlayerEl.addEventListener('touchstart', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.closest('input') || e.target.closest('button')) return;
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, {passive: true});
+
+    fullPlayerEl.addEventListener('touchend', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.closest('input') || e.target.closest('button')) return;
+      let touchEndX = e.changedTouches[0].screenX;
+      let touchEndY = e.changedTouches[0].screenY;
+      let diffX = touchEndX - touchStartX;
+      let diffY = touchEndY - touchStartY;
+
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 70) {
+          prevTrack();
+        } else if (diffX < -70) {
+          nextTrack();
+        }
+      } else {
+        if (diffY > 100) {
+          closeFullPlayer();
+        }
+      }
+    }, {passive: true});
 
     function toggleFavorite(e, id) {
       if(e) e.stopPropagation();
@@ -588,6 +711,7 @@
     history.pushState(null, '', location.href);
     window.addEventListener('popstate', function () {
       if (!document.getElementById('authModal').classList.contains('hidden')) { closeAuthModal(); history.pushState(null, '', location.href); }
+      else if (!document.getElementById('commentsModal').classList.contains('hidden')) { closeCommentsModal(); history.pushState(null, '', location.href); }
       else if (!document.getElementById('sleepModal').classList.contains('hidden')) { closeSleepModal(); history.pushState(null, '', location.href); }
       else if (!document.getElementById('queueModal').classList.contains('hidden')) { closeQueueModal(); history.pushState(null, '', location.href); }
       else if (!document.getElementById('fullPlayer').classList.contains('translate-y-full')) { closeFullPlayer(); history.pushState(null, '', location.href); }
