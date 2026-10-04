@@ -7,6 +7,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>منصة الأناشيد</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- استدعاء مكتبة PeerJS للاتصال المباشر بين الأصدقاء -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <script>
     if (localStorage.getItem('site_theme') === 'dark' || (!localStorage.getItem('site_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
@@ -44,8 +46,7 @@
     </div>
    </div>
   </div>
-
-  <!-- نافذة التعليقات التفاعلية (جديد) -->
+  <!-- نافذة التعليقات التفاعلية -->
   <div id="commentsModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative flex flex-col max-h-[85vh]">
     <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -55,20 +56,13 @@
      </div>
      <button onclick="closeCommentsModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></button>
     </div>
-    
-    <!-- قائمة التعليقات -->
-    <div id="commentsList" class="overflow-y-auto space-y-3 flex-1 pr-1 text-xs min-h-[150px] max-h-[350px]">
-     <!-- تعليقات تظهر هنا -->
-    </div>
-
-    <!-- إضافة تعليق جديد -->
+    <div id="commentsList" class="overflow-y-auto space-y-3 flex-1 pr-1 text-xs min-h-[150px] max-h-[350px]"></div>
     <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex gap-2">
      <input type="text" id="commentInput" placeholder="اكتب تعليقاً..." class="flex-1 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-emerald-500">
      <button onclick="submitComment()" class="bg-emerald-500 text-slate-950 px-4 rounded-xl font-bold text-xs shadow hover:bg-emerald-400 transition-colors">إرسال</button>
     </div>
    </div>
   </div>
-
   <!-- نافذة مؤقت النوم -->
   <div id="sleepModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden pointer-events-none">
    <div id="sleepModalBox" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl relative pointer-events-auto cursor-grab active:cursor-grabbing">
@@ -91,15 +85,16 @@
     <button onclick="setSleepTimer(0)" class="w-full py-2 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold">إلغاء المؤقت</button>
    </div>
   </div>
-
   <!-- نافذة قائمة الانتظار -->
   <div id="queueModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-3 shadow-2xl relative max-h-[80vh] flex flex-col">
-    <div class="flex justify-between items-center"><h3 class="font-bold text-sm">قائمة التشغيل التالية</h3><button onclick="closeQueueModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="flex justify-between items-center">
+     <h3 class="font-bold text-sm">قائمة التشغيل التالية</h3>
+     <button onclick="closeQueueModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    </div>
     <div id="queueList" class="overflow-y-auto space-y-2 flex-1 pr-1"></div>
    </div>
   </div>
-
   <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 p-4">
    <div class="max-w-md mx-auto flex justify-between items-center">
     <div class="flex items-center gap-2">
@@ -116,13 +111,28 @@
     </div>
    </div>
   </header>
-
   <main class="max-w-md mx-auto w-full p-4 flex-1 space-y-4">
    <div class="relative flex items-center">
-    <i class="fa-solid fa-magnifying-glass absolute right-4 text-slate-400"></i> 
-    <input type="text" id="searchInput" oninput="renderTracks()" placeholder="ابحث عن أنشودة..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pr-11 pl-12 py-3 text-sm focus:outline-none focus:border-emerald-500">
+    <i class="fa-solid fa-magnifying-glass absolute right-4 text-slate-400"></i> <input type="text" id="searchInput" oninput="renderTracks()" placeholder="ابحث عن أنشودة..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pr-11 pl-12 py-3 text-sm focus:outline-none focus:border-emerald-500">
     <button onclick="startVoiceSearch()" class="absolute left-3 text-slate-400 hover:text-emerald-500 p-1" title="بحث صوتي"><i class="fa-solid fa-microphone text-sm"></i></button>
    </div>
+   
+   <!-- قسم الاستماع الجماعي الجديد المدمج بالواجهة -->
+   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm space-y-2">
+    <div class="flex items-center justify-between">
+     <span class="text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-headphones-simple text-emerald-500"></i> الاستماع الجماعي</span>
+     <span id="groupStatus" class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">غير متصل</span>
+    </div>
+    <div id="groupControlsLobby" class="flex gap-2">
+     <button onclick="createGroupRoom()" class="flex-1 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs shadow hover:bg-emerald-400 transition-colors">إنشاء غرفة 🎧</button>
+     <input type="text" id="groupJoinInput" placeholder="كود الغرفة..." class="w-28 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-center text-xs focus:outline-none focus:border-emerald-500">
+     <button onclick="joinGroupRoom()" class="px-3 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs shadow hover:bg-blue-500 transition-colors">انضمام</button>
+    </div>
+    <div id="groupActiveInfo" class="hidden text-center text-xs space-y-1 pt-1">
+     <p class="text-slate-400">كود غرفتك النشطة: <span id="groupRoomDisplayCode" class="text-emerald-500 font-bold select-all"></span></p>
+    </div>
+   </div>
+
    <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs">
     <button onclick="selectCategory('all')" id="filt_all" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0">الكل</button>
     <button onclick="selectCategory('الشيخ سعد الغامدي')" id="filt_الشيخ سعد الغامدي" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">الشيخ سعد الغامدي</button>
@@ -142,7 +152,6 @@
    </div>
    <div id="tracksList" class="space-y-3"></div>
   </main>
-  
   <!-- المشغل المصغّر -->
   <div id="miniPlayer" class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 z-40 shadow-lg">
    <div class="max-w-md mx-auto">
@@ -161,8 +170,7 @@
     </div>
    </div>
   </div>
-
-  <!-- المشغل الكامل مع دعم الإيماءات -->
+  <!-- المشغل الكامل -->
   <div id="fullPlayer" class="fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 transition-transform duration-300 translate-y-full max-w-md mx-auto text-white">
    <div class="flex justify-between items-center pt-2">
     <button onclick="openSleepModal()" class="text-slate-300 text-lg relative p-2" title="مؤقت النوم"><i class="fa-solid fa-clock"></i><span id="sleepBadge" class="absolute top-0 right-0 text-[9px] bg-emerald-500 text-slate-950 px-1 rounded-full hidden">0</span></button>
@@ -185,14 +193,9 @@
     <div class="flex justify-between text-[11px] text-slate-300">
      <span id="currentTime">0:00</span> <span id="duration">0:00</span>
     </div>
-    
-    <!-- شريط تحكم مستوى الصوت -->
     <div class="flex items-center gap-3 px-1 text-slate-400">
-     <i class="fa-solid fa-volume-low text-xs"></i>
-     <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg cursor-pointer">
-     <i class="fa-solid fa-volume-high text-xs"></i>
+     <i class="fa-solid fa-volume-low text-xs"></i> <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg cursor-pointer"> <i class="fa-solid fa-volume-high text-xs"></i>
     </div>
-
     <div class="flex items-center justify-between px-2 pt-2">
      <button onclick="openQueueModal()" class="text-slate-300 text-lg"><i class="fa-solid fa-list-ul"></i></button>
      <button onclick="toggleShuffle()" id="shuffleBtn" class="text-slate-300 text-lg" title="تشغيل عشوائي"><i class="fa-solid fa-shuffle"></i></button>
@@ -203,9 +206,7 @@
     </div>
    </div>
   </div>
-
   <audio id="audioPlayer"></audio>
-
   <script>
     const initialTracks = [
       { id: 1, title: "نهضي امتنا", artist: "ابو مصعب", category: "ابو مصعب", url: "https://files.catbox.moe/v2hjv6.mp3", duration: "--:--" },
@@ -268,455 +269,477 @@
     function toggleTheme() {
       let dark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('site_theme', dark ? 'dark' : 'light');
+      document.getElementById('themeIcon').className = dark ? 'fa-solid fa-sun text-lg' : 'fa-solid fa-moon text-lg';
+    }
+    if(document.documentElement.classList.contains('dark')) {
+      document.getElementById('themeIcon').className = 'fa-solid fa-sun text-lg';
     }
 
-    function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
-    function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
-    
-    function openSleepModal() { document.getElementById('sleepModal').classList.remove('hidden'); }
-    function closeSleepModal() { document.getElementById('sleepModal').classList.add('hidden'); }
+    // --- ربط نظام الاستماع الجماعي (PeerJS) بالمنصة ---
+    let peer = null;
+    let peerConn = null;
+    let isGroupHost = false;
+
+    function updateGroupStatusText(text, badgeClass = "text-slate-400 bg-slate-100 dark:bg-slate-800") {
+      const statusEl = document.getElementById('groupStatus');
+      if (statusEl) {
+        statusEl.innerText = text;
+        statusEl.className = `text-[10px] px-2 py-0.5 rounded-full ${badgeClass}`;
+      }
+    }
+
+    function createGroupRoom() {
+      isGroupHost = true;
+      const randomCode = 'room-' + Math.floor(1000 + Math.random() * 9000);
+      
+      if(peer) { peer.destroy(); }
+      peer = new Peer(randomCode);
+
+      peer.on('open', (id) => {
+        document.getElementById('groupControlsLobby').style.display = 'none';
+        document.getElementById('groupActiveInfo').style.display = 'block';
+        document.getElementById('groupRoomDisplayCode').innerText = id;
+        updateGroupStatusText("مضيف الغرفة 🟢", "text-emerald-500 bg-emerald-500/10");
+      });
+
+      peer.on('connection', (connection) => {
+        peerConn = connection;
+        setupPeerConnectionEvents();
+        updateGroupStatusText("متصل مع صديق 🎧", "text-emerald-500 bg-emerald-500/10");
+        
+        // مزامنة الأنشودة الحالية فور انضمام الصديق
+        setTimeout(() => {
+          sendGroupSync('sync-state', {
+            src: audio.src,
+            currentTime: audio.currentTime,
+            isPlaying: !audio.paused,
+            trackId: currentTrackId
+          });
+        }, 800);
+      });
+    }
+
+    function joinGroupRoom() {
+      const codeInput = document.getElementById('groupJoinInput').value.trim();
+      if (!codeInput) {
+        alert('الرجاء إدخال كود الغرفة أولاً!');
+        return;
+      }
+
+      isGroupHost = false;
+      if(peer) { peer.destroy(); }
+      peer = new Peer();
+
+      peer.on('open', () => {
+        peerConn = peer.connect(codeInput);
+        setupPeerConnectionEvents();
+        updateGroupStatusText("جاري الاتصال...", "text-amber-500 bg-amber-500/10");
+      });
+    }
+
+    function setupPeerConnectionEvents() {
+      peerConn.on('open', () => {
+        if (!isGroupHost) {
+          updateGroupStatusText("منضم للغرفة 🟢", "text-emerald-500 bg-emerald-500/10");
+          document.getElementById('groupControlsLobby').style.display = 'none';
+          document.getElementById('groupActiveInfo').style.display = 'block';
+          document.getElementById('groupRoomDisplayCode').innerText = peerConn.peer;
+        }
+      });
+
+      peerConn.on('data', (data) => {
+        if (!isGroupHost) {
+          // إلغاء مؤقت لمستمعات الأداء للضيف لمنع التكرار
+          audio.onplay = null;
+          audio.onpause = null;
+          audio.onseeked = null;
+
+          if (data.type === 'play-track' || data.type === 'sync-state') {
+            if (currentTrackId !== data.trackId) {
+              currentTrackId = data.trackId;
+              let t = initialTracks.find(x => x.id === currentTrackId);
+              if (t) {
+                audio.src = t.url;
+                updatePlayerUI(t);
+              } else if (data.src) {
+                audio.src = data.src;
+              }
+            }
+            audio.currentTime = data.currentTime;
+            if (data.isPlaying) {
+              audio.play().catch(e => console.log(e));
+            } else {
+              audio.pause();
+            }
+          } else if (data.type === 'pause') {
+            audio.pause();
+          } else if (data.type === 'play') {
+            audio.currentTime = data.currentTime;
+            audio.play().catch(e => console.log(e));
+          } else if (data.type === 'seek') {
+            audio.currentTime = data.currentTime;
+          }
+
+          setTimeout(attachGroupHostListeners, 400);
+        }
+      });
+    }
+
+    function sendGroupSync(type, data = {}) {
+      if (peerConn && peerConn.open) {
+        peerConn.send({
+          type: type,
+          currentTime: audio.currentTime,
+          isPlaying: !audio.paused,
+          trackId: currentTrackId,
+          src: audio.src,
+          ...data
+        });
+      }
+    }
+
+    function attachGroupHostListeners() {
+      if (!isGroupHost) return;
+
+      audio.onplay = () => sendGroupSync('play');
+      audio.onpause = () => sendGroupSync('pause');
+      audio.onseeked = () => sendGroupSync('seek');
+    }
+
+    // دوال العرض والتشغيل الأساسية للمنصة
+    function renderTracks() {
+      let list = document.getElementById('tracksList');
+      let search = document.getElementById('searchInput').value.toLowerCase();
+      
+      let filtered = initialTracks.filter(t => {
+        let matchCat = (selectedCategory === 'all' || t.category === selectedCategory);
+        let matchSearch = t.title.toLowerCase().includes(search) || t.artist.toLowerCase().includes(search);
+        let matchView = true;
+        if(currentViewMode === 'favorites') matchView = favorites.includes(t.id);
+        if(currentViewMode === 'history') matchView = historyTracks.includes(t.id);
+        return matchCat && matchSearch && matchView;
+      });
+
+      if(filtered.length === 0) {
+        list.innerHTML = `<div class="text-center py-10 text-xs text-slate-400">لا توجد أناشيد مطابقة</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(t => {
+        let isFav = favorites.includes(t.id);
+        let isPlaying = (currentTrackId === t.id && !audio.paused);
+        return `
+          <div onclick="playTrack(${t.id})" class="bg-white dark:bg-slate-900 border ${currentTrackId === t.id ? 'border-emerald-500' : 'border-slate-200 dark:border-slate-800'} rounded-2xl p-3 flex items-center justify-between cursor-pointer hover:border-emerald-500/50 transition-all shadow-sm">
+           <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-black border border-slate-800 shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">
+             ${isPlaying ? '<i class="fa-solid fa-volume-high text-emerald-400 animate-pulse text-base"></i>' : 'لا إله إلا الله'}
+            </div>
+            <div>
+             <h4 class="font-bold text-sm ${currentTrackId === t.id ? 'text-emerald-500' : ''}">${t.title}</h4>
+             <p class="text-xs text-slate-400 mt-0.5">${t.artist} • <span class="text-[10px]">${t.duration}</span></p>
+            </div>
+           </div>
+           <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+            <button onclick="openCommentsModal(${t.id})" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-emerald-500 flex items-center justify-center text-xs" title="التعليقات"><i class="fa-regular fa-comment"></i></button>
+            <button onclick="toggleFavorite(${t.id})" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 ${isFav ? 'text-red-500' : 'text-slate-400'} flex items-center justify-center text-xs"><i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i></button>
+           </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectCategory(cat) {
+      selectedCategory = cat;
+      document.querySelectorAll('main div.flex.gap-1.5.overflow-x-auto button').forEach(b => {
+        b.className = "px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0";
+      });
+      let activeBtn = document.getElementById('filt_' + cat);
+      if(activeBtn) activeBtn.className = "px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0";
+      renderTracks();
+    }
+
+    function setViewMode(mode) {
+      currentViewMode = mode;
+      ['all', 'Fav', 'History'].forEach(m => {
+        let btn = document.getElementById('btn' + m);
+        if(btn) btn.className = "flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5";
+      });
+      let active = mode === 'all' ? 'All' : (mode === 'favorites' ? 'Fav' : 'History');
+      let actBtn = document.getElementById('btn' + active);
+      if(actBtn) actBtn.className = "flex-1 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold flex items-center justify-center gap-1.5";
+      
+      document.getElementById('historyHeader').style.display = (mode === 'history') ? 'flex' : 'none';
+      renderTracks();
+    }
+
+    function playTrack(id) {
+      let t = initialTracks.find(x => x.id === id);
+      if(!t) return;
+      currentTrackId = id;
+      audio.src = t.url;
+      audio.play().catch(e => console.log(e));
+      
+      updatePlayerUI(t);
+
+      if(!historyTracks.includes(id)) {
+        historyTracks.unshift(id);
+        if(historyTracks.length > 20) historyTracks.pop();
+        saveUserData();
+      }
+
+      if (isGroupHost) {
+        sendGroupSync('play-track', { trackId: id, src: t.url });
+      }
+
+      renderTracks();
+    }
+
+    function updatePlayerUI(t) {
+      document.getElementById('miniTitle').innerText = t.title;
+      document.getElementById('miniArtist').innerText = t.artist;
+      document.getElementById('fullTitle').innerText = t.title;
+      document.getElementById('fullArtist').innerText = t.artist;
+      document.getElementById('miniPlayIcon').className = "fa-solid fa-pause";
+      document.getElementById('fullPlayIcon').className = "fa-solid fa-pause";
+      
+      let isFav = favorites.includes(t.id);
+      document.getElementById('fullFavBtn').innerHTML = `<i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular'} fa-star"></i>`;
+    }
+
+    function togglePlay() {
+      if(!currentTrackId && initialTracks.length > 0) {
+        playTrack(initialTracks[0].id);
+        return;
+      }
+      if(audio.paused) {
+        audio.play().catch(e => console.log(e));
+        document.getElementById('miniPlayIcon').className = "fa-solid fa-pause";
+        document.getElementById('fullPlayIcon').className = "fa-solid fa-pause";
+        if (isGroupHost) sendGroupSync('play');
+      } else {
+        audio.pause();
+        document.getElementById('miniPlayIcon').className = "fa-solid fa-play";
+        document.getElementById('fullPlayIcon').className = "fa-solid fa-play";
+        if (isGroupHost) sendGroupSync('pause');
+      }
+      renderTracks();
+    }
+
+    audio.ontimeupdate = () => {
+      if(audio.duration) {
+        let p = (audio.currentTime / audio.duration) * 100;
+        document.getElementById('progressBar').value = p;
+        document.getElementById('miniProgressBar').value = p;
+        
+        let curMin = Math.floor(audio.currentTime / 60);
+        let curSec = Math.floor(audio.currentTime % 60);
+        document.getElementById('currentTime').innerText = curMin + ":" + (curSec < 10 ? '0' : '') + curSec;
+        
+        let durMin = Math.floor(audio.duration / 60);
+        let durSec = Math.floor(audio.duration % 60);
+        document.getElementById('duration').innerText = durMin + ":" + (durSec < 10 ? '0' : '') + durSec;
+      }
+    };
+
+    audio.onended = () => {
+      if(repeatMode === 1) {
+        audio.currentTime = 0;
+        audio.play();
+      } else {
+        nextTrack();
+      }
+    };
+
+    function seekTrack() {
+      if(audio.duration) {
+        audio.currentTime = (document.getElementById('progressBar').value / 100) * audio.duration;
+        if (isGroupHost) sendGroupSync('seek');
+      }
+    }
+
+    function seekTrackMini() {
+      if(audio.duration) {
+        audio.currentTime = (document.getElementById('miniProgressBar').value / 100) * audio.duration;
+        if (isGroupHost) sendGroupSync('seek');
+      }
+    }
+
+    function changeVolume(val) { audio.volume = val; }
+
+    function nextTrack() {
+      let filtered = initialTracks.filter(t => selectedCategory === 'all' || t.category === selectedCategory);
+      let idx = filtered.findIndex(x => x.id === currentTrackId);
+      if(idx !== -1 && idx < filtered.length - 1) {
+        playTrack(filtered[idx + 1].id);
+      } else if(filtered.length > 0) {
+        playTrack(filtered[0].id);
+      }
+    }
+
+    function prevTrack() {
+      let filtered = initialTracks.filter(t => selectedCategory === 'all' || t.category === selectedCategory);
+      let idx = filtered.findIndex(x => x.id === currentTrackId);
+      if(idx > 0) {
+        playTrack(filtered[idx - 1].id);
+      } else if(filtered.length > 0) {
+        playTrack(filtered[filtered.length - 1].id);
+      }
+    }
+
+    function toggleFavorite(id) {
+      let idx = favorites.indexOf(id);
+      if(idx === -1) favorites.push(id);
+      else favorites.splice(idx, 1);
+      saveUserData();
+      renderTracks();
+      if(id === currentTrackId) {
+        let isFav = favorites.includes(id);
+        document.getElementById('fullFavBtn').innerHTML = `<i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular'} fa-star"></i>`;
+      }
+    }
+
+    function toggleCurrentFavorite() {
+      if(currentTrackId) toggleFavorite(currentTrackId);
+    }
+
+    function clearHistory() {
+      historyTracks = [];
+      saveUserData();
+      renderTracks();
+    }
+
+    function openFullPlayer() { document.getElementById('fullPlayer').classList.remove('translate-y-full'); }
+    function closeFullPlayer() { document.getElementById('fullPlayer').classList.add('translate-y-full'); }
 
     // إدارة التعليقات
     function openCommentsModal(id) {
       activeCommentTrackId = id;
       let t = initialTracks.find(x => x.id === id);
-      if(!t) return;
-      document.getElementById('commentsModalTitle').innerText = 'تعليقات: ' + t.title;
+      document.getElementById('commentsModalTitle').innerText = t ? `تعليقات: ${t.title}` : 'التعليقات';
       renderCommentsList();
       document.getElementById('commentsModal').classList.remove('hidden');
     }
-
-    function closeCommentsModal() {
-      document.getElementById('commentsModal').classList.add('hidden');
-      activeCommentTrackId = null;
-    }
+    function closeCommentsModal() { document.getElementById('commentsModal').classList.add('hidden'); }
 
     function renderCommentsList() {
       let container = document.getElementById('commentsList');
-      container.innerHTML = '';
-      if (!activeCommentTrackId) return;
-      let comments = trackComments[activeCommentTrackId] || [];
-      if (comments.length === 0) {
-        container.innerHTML = `<div class="text-center py-6 text-slate-400">لا توجد تعليقات بعد، كن أول من يعلق!</div>`;
+      let list = trackComments[activeCommentTrackId] || [];
+      if(list.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 text-center py-6">لا توجد تعليقات بعد. كن اول من يعلق!</p>`;
         return;
       }
-      comments.forEach(c => {
-        container.innerHTML += `
-          <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl space-y-1">
-            <div class="flex justify-between items-center text-[10px] text-slate-400">
-              <span class="font-bold text-emerald-500">${c.user}</span>
-              <span>${c.date}</span>
-            </div>
-            <p class="text-slate-700 dark:text-slate-300">${c.text}</p>
-          </div>
-        `;
-      });
+      container.innerHTML = list.map(c => `
+        <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-xl space-y-1">
+         <div class="flex justify-between font-bold text-emerald-500">
+          <span>${c.user}</span>
+          <span class="text-[9px] text-slate-400">${c.date}</span>
+         </div>
+         <p class="text-slate-700 dark:text-slate-300">${c.text}</p>
+        </div>
+      `).join('');
     }
 
     function submitComment() {
-      let input = document.getElementById('commentInput');
-      let text = input.value.trim();
-      if (!text) return;
-      let username = currentUser ? currentUser : 'زائر';
-      if (!trackComments[activeCommentTrackId]) {
-        trackComments[activeCommentTrackId] = [];
-      }
-      let now = new Date();
-      let dateStr = now.toLocaleDateString('ar-SA') + ' ' + now.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
-      
-      trackComments[activeCommentTrackId].push({ user: username, text: text, date: dateStr });
-      localStorage.setItem('track_comments', JSON.stringify(trackComments));
-      input.value = '';
-      renderCommentsList();
-      renderTracks();
-    }
-
-    function toggleLockSleepModal() {
-      isSleepLocked = !isSleepLocked;
-      let btn = document.getElementById('lockSleepBtn');
-      let box = document.getElementById('sleepModalBox');
-      if (isSleepLocked) {
-        btn.innerHTML = '<i class="fa-solid fa-lock text-xs text-emerald-400"></i>';
-        box.style.cursor = 'default';
-      } else {
-        btn.innerHTML = '<i class="fa-solid fa-lock-open text-xs"></i>';
-        box.style.cursor = 'grab';
-      }
-    }
-
-    const sleepBox = document.getElementById('sleepModalBox');
-    let isDragging = false, startX, startY, initialX = 0, initialY = 0;
-
-    sleepBox.addEventListener('pointerdown', (e) => {
-      if (isSleepLocked || e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-      isDragging = true;
-      startX = e.clientX - initialX;
-      startY = e.clientY - initialY;
-      sleepBox.setPointerCapture(e.pointerId);
-      sleepBox.style.cursor = 'grabbing';
-    });
-
-    sleepBox.addEventListener('pointermove', (e) => {
-      if (!isDragging || isSleepLocked) return;
-      initialX = e.clientX - startX;
-      initialY = e.clientY - startY;
-      sleepBox.style.transform = `translate(${initialX}px, ${initialY}px)`;
-    });
-
-    sleepBox.addEventListener('pointerup', () => {
-      isDragging = false;
-      if (!isSleepLocked) sleepBox.style.cursor = 'grab';
-    });
-    
-    function openQueueModal() {
-      let list = document.getElementById('queueList');
-      list.innerHTML = '';
-      initialTracks.forEach(t => {
-        list.innerHTML += `<div onclick="playTrack(${t.id}); closeQueueModal();" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 flex justify-between items-center text-xs cursor-pointer"><span>${t.title}</span><span class="text-slate-400">${t.artist}</span></div>`;
+      let text = document.getElementById('commentInput').value.trim();
+      if(!text) return;
+      if(!trackComments[activeCommentTrackId]) trackComments[activeCommentTrackId] = [];
+      trackComments[activeCommentTrackId].push({
+        user: currentUser ? currentUser : 'زائر',
+        text: text,
+        date: new Date().toLocaleDateString()
       });
-      document.getElementById('queueModal').classList.remove('hidden');
-    }
-    function closeQueueModal() { document.getElementById('queueModal').classList.add('hidden'); }
-
-    function setSleepTimer(minutes) {
-      clearInterval(sleepTimerInterval);
-      closeSleepModal();
-      let badge = document.getElementById('sleepBadge');
-      if (minutes === 0) {
-        badge.classList.add('hidden');
-        return;
-      }
-      sleepTimeRemaining = minutes * 60;
-      badge.innerText = minutes;
-      badge.classList.remove('hidden');
-      
-      sleepTimerInterval = setInterval(() => {
-        sleepTimeRemaining--;
-        let mins = Math.ceil(sleepTimeRemaining / 60);
-        badge.innerText = mins;
-        if (sleepTimeRemaining <= 0) {
-          clearInterval(sleepTimerInterval);
-          audio.pause();
-          updatePlayIcons(false);
-          badge.classList.add('hidden');
-        }
-      }, 1000);
+      localStorage.setItem('track_comments', JSON.stringify(trackComments));
+      document.getElementById('commentInput').value = '';
+      renderCommentsList();
     }
 
-    function downloadCurrentTrack() {
-      let t = initialTracks.find(x => x.id === currentTrackId);
-      if(!t) return;
-      let a = document.createElement('a');
-      a.href = t.url;
-      a.download = t.title + '.mp3';
-      a.target = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-    function shareCurrentTrack() {
-      let t = initialTracks.find(x => x.id === currentTrackId);
-      if(!t) return;
-      if (navigator.share) {
-        navigator.share({ title: t.title, text: 'اسمع هذه الأنشودة الرائعة: ' + t.title, url: t.url }).catch(() => {});
-      } else {
-        navigator.clipboard.writeText(t.url);
-        alert('تم نسخ رابط الأنشودة!');
-      }
-    }
-
+    // دوال ثانوية
+    function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
+    function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
     function handleLogin() {
-      let u = document.getElementById('authUsername').value.trim();
-      if (!u) { alert('الرجاء إدخال اسم المستخدم'); return; }
-      currentUser = u;
+      let name = document.getElementById('authUsername').value.trim();
+      if(!name) return;
+      currentUser = name;
       localStorage.setItem('current_user', currentUser);
       loadUserData();
       closeAuthModal();
       renderTracks();
     }
 
-    function selectCategory(cat) {
-      selectedCategory = cat;
-      ['all', 'الشيخ سعد الغامدي', 'ابو مصعب', 'نايف الشرهان', 'إدريس ابكر', 'أسامة'].forEach(c => {
-        let b = document.getElementById('filt_' + c);
-        if(b) b.className = (c === cat) ? "px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0" : "px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0";
-      });
-      renderTracks();
-    }
-
-    function renderTracks() {
-      let list = document.getElementById('tracksList'), search = document.getElementById('searchInput').value.toLowerCase();
-      document.getElementById('historyHeader').classList.toggle('hidden', currentViewMode !== 'history');
-      list.innerHTML = '';
-      
-      let filtered = initialTracks.filter(t => {
-        if (currentViewMode === 'favorites' && !favorites.includes(t.id)) return false;
-        if (currentViewMode === 'history' && !historyTracks.includes(t.id)) return false;
-        if (selectedCategory !== 'all' && t.category !== selectedCategory) return false;
-        if (search && !t.title.toLowerCase().includes(search) && !t.artist.toLowerCase().includes(search)) return false;
-        return true;
-      });
-
-      if (!filtered.length) { list.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">لا توجد نتائج مطابقة</div>`; return; }
-
-      filtered.forEach(t => {
-        let isFav = favorites.includes(t.id);
-        let commentsCount = (trackComments[t.id] || []).length;
-        list.innerHTML += `
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 shadow-sm">
-            <div class="flex items-center justify-between cursor-pointer" onclick="playTrack(${t.id}); openFullPlayer();">
-              <div class="flex items-center gap-3 flex-1">
-                <div class="w-12 h-12 rounded-lg overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">
-                  لا إله إلا الله
-                </div>
-                <div>
-                  <h3 class="font-bold text-sm">${t.title}</h3>
-                  <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
-                    <span>${t.artist}</span>
-                    <span class="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full"><i class="fa-solid fa-eye"></i> ${trackViews[t.id] || 0}</span>
-                    <span class="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">${t.duration}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="flex items-center gap-1" onclick="event.stopPropagation()">
-                <a href="${t.url}" download class="p-2 text-slate-400 hover:text-emerald-500"><i class="fa-solid fa-download text-xs"></i></a>
-                <button onclick="toggleFavorite(event, ${t.id})" class="p-2 text-lg"><i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular text-slate-400'} fa-heart"></i></button>
-              </div>
-            </div>
-            <!-- زر التعليقات التفاعلية -->
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/60 text-xs">
-              <button onclick="openCommentsModal(${t.id})" class="flex items-center gap-1.5 text-slate-400 hover:text-emerald-500 transition-colors">
-                <i class="fa-regular fa-comment"></i>
-                <span>التعليقات (${commentsCount})</span>
-              </button>
-              <span class="text-[10px] text-slate-400">انقر للتشغيل والاستماع</span>
-            </div>
-          </div>`;
-      });
-    }
-
-    function playTrack(id, savedTime = 0) {
-      let t = initialTracks.find(x => x.id === id);
-      if(!t) return;
-      
-      if (currentTrackId !== id) {
-        currentTrackId = id;
-        trackViews[id] = (trackViews[id] || 0) + 1;
-        localStorage.setItem('track_views', JSON.stringify(trackViews));
-        historyTracks = [id, ...historyTracks.filter(x => x !== id)];
-        saveUserData();
-      }
-
-      document.getElementById('miniTitle').innerText = t.title;
-      document.getElementById('miniArtist').innerText = t.artist;
-      document.getElementById('fullTitle').innerText = t.title;
-      document.getElementById('fullArtist').innerText = t.artist;
-      document.getElementById('fullFavBtn').innerHTML = `<i class="${favorites.includes(id)?'fa-solid text-yellow-400':'fa-regular text-slate-300'} fa-star"></i>`;
-
-      audio.src = t.url;
-      audio.onloadedmetadata = () => {
-        if (savedTime > 0) audio.currentTime = savedTime;
-        audio.play();
-        updatePlayIcons(true);
-      };
-      audio.play();
-      updatePlayIcons(true);
-      renderTracks();
-    }
-
-    function togglePlay() {
-      if(!audio.src) { playTrack(1); return; }
-      audio.paused ? (audio.play(), updatePlayIcons(true)) : (audio.pause(), updatePlayIcons(false));
-    }
-
-    function updatePlayIcons(isPlaying) {
-      let c = isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
-      document.getElementById('miniPlayIcon').className = c;
-      document.getElementById('fullPlayIcon').className = c;
-    }
-
-    function openFullPlayer() { 
-      document.getElementById('fullPlayer').classList.remove('translate-y-full'); 
-      history.pushState({playerOpen: true}, '');
-    }
-    
-    function closeFullPlayer() { 
-      document.getElementById('fullPlayer').classList.add('translate-y-full'); 
-    }
-
-    // إيماءات اللمس للمشغل الكامل
-    const fullPlayerEl = document.getElementById('fullPlayer');
-    let touchStartX = 0, touchStartY = 0;
-
-    fullPlayerEl.addEventListener('touchstart', (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.closest('input') || e.target.closest('button')) return;
-      touchStartX = e.changedTouches[0].screenX;
-      touchStartY = e.changedTouches[0].screenY;
-    }, {passive: true});
-
-    fullPlayerEl.addEventListener('touchend', (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.closest('input') || e.target.closest('button')) return;
-      let touchEndX = e.changedTouches[0].screenX;
-      let touchEndY = e.changedTouches[0].screenY;
-      let diffX = touchEndX - touchStartX;
-      let diffY = touchEndY - touchStartY;
-
-      if (Math.abs(diffX) > Math.abs(diffY)) {
-        if (diffX > 70) {
-          prevTrack();
-        } else if (diffX < -70) {
-          nextTrack();
-        }
-      } else {
-        if (diffY > 100) {
-          closeFullPlayer();
-        }
-      }
-    }, {passive: true});
-
-    function toggleFavorite(e, id) {
-      if(e) e.stopPropagation();
-      favorites = favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites, id];
-      saveUserData();
-      renderTracks();
-    }
-    function toggleCurrentFavorite() { if(currentTrackId) toggleFavorite(null, currentTrackId); }
-    function clearHistory() { historyTracks = []; saveUserData(); renderTracks(); }
-
-    function setViewMode(mode) {
-      currentViewMode = mode;
-      ['all', 'favorites', 'history'].forEach(m => {
-        let btn = document.getElementById(m === 'all' ? 'btnAll' : (m === 'favorites' ? 'btnFav' : 'btnHistory'));
-        btn.className = (m === mode) ? "flex-1 py-2 rounded-lg bg-emerald-500 text-slate-950" : "flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5";
-      });
-      renderTracks();
-    }
-
-    function nextTrack() {
-      if(!currentTrackId) return;
-      if (isShuffle) {
-        let randomIndex = Math.floor(Math.random() * initialTracks.length);
-        playTrack(initialTracks[randomIndex].id);
+    function openSleepModal() { document.getElementById('sleepModal').classList.remove('hidden'); }
+    function closeSleepModal() { document.getElementById('sleepModal').classList.add('hidden'); }
+    function setSleepTimer(mins) {
+      clearInterval(sleepTimerInterval);
+      if(mins === 0) {
+        document.getElementById('sleepBadge').classList.add('hidden');
+        closeSleepModal();
         return;
       }
-      let idx = initialTracks.findIndex(t => t.id === currentTrackId);
-      playTrack(initialTracks[(idx + 1) % initialTracks.length].id);
+      sleepTimeRemaining = mins * 60;
+      document.getElementById('sleepBadge').innerText = mins;
+      document.getElementById('sleepBadge').classList.remove('hidden');
+      closeSleepModal();
+      sleepTimerInterval = setInterval(() => {
+        sleepTimeRemaining--;
+        if(sleepTimeRemaining <= 0) {
+          clearInterval(sleepTimerInterval);
+          audio.pause();
+          document.getElementById('miniPlayIcon').className = "fa-solid fa-play";
+          document.getElementById('fullPlayIcon').className = "fa-solid fa-play";
+          document.getElementById('sleepBadge').classList.add('hidden');
+        }
+      }, 1000);
     }
 
-    function prevTrack() {
-      if(!currentTrackId) return;
-      let idx = initialTracks.findIndex(t => t.id === currentTrackId);
-      playTrack(initialTracks[(idx - 1 + initialTracks.length) % initialTracks.length].id);
+    function toggleRepeat() {
+      repeatMode = (repeatMode + 1) % 2;
+      let btn = document.getElementById('repeatBtn');
+      btn.style.color = repeatMode === 1 ? '#10b981' : '';
     }
 
     function toggleShuffle() {
       isShuffle = !isShuffle;
       let btn = document.getElementById('shuffleBtn');
-      if (isShuffle) {
-        btn.className = "text-emerald-400 text-lg scale-110";
-        btn.title = "التشغيل العشوائي مفعل";
+      btn.style.color = isShuffle ? '#10b981' : '';
+    }
+
+    function openQueueModal() { document.getElementById('queueModal').classList.remove('hidden'); }
+    function closeQueueModal() { document.getElementById('queueModal').classList.add('hidden'); }
+    function shareCurrentTrack() {
+      if(navigator.share && currentTrackId) {
+        let t = initialTracks.find(x => x.id === currentTrackId);
+        navigator.share({ title: t.title, url: t.url });
       } else {
-        btn.className = "text-slate-300 text-lg";
-        btn.title = "تشغيل عشوائي";
+        alert('المشاركة غير متوفرة في متصفحك');
       }
     }
-
-    function toggleRepeat() {
-      repeatMode = (repeatMode + 1) % 3;
-      let btn = document.getElementById('repeatBtn');
-      if (repeatMode === 0) {
-        btn.className = "text-slate-300 text-lg";
-        btn.title = "بدون تكرار";
-      } else if (repeatMode === 1) {
-        btn.className = "text-emerald-400 text-lg scale-110";
-        btn.title = "تكرار القائمة";
-      } else if (repeatMode === 2) {
-        btn.className = "text-amber-400 text-lg scale-110 relative";
-        btn.title = "تكرار فردي (Repeat One)";
+    function downloadCurrentTrack() {
+      if(currentTrackId) {
+        let t = initialTracks.find(x => x.id === currentTrackId);
+        let a = document.createElement('a');
+        a.href = t.url;
+        a.download = t.title + '.mp3';
+        a.click();
       }
     }
-
-    function changeVolume(val) {
-      audio.volume = val;
-    }
-
     function startVoiceSearch() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        alert('متصفحك لا يدعم خاصية البحث الصوتي');
-        return;
+      if('webkitSpeechRecognition' in window) {
+        let rec = new webkitSpeechRecognition();
+        rec.lang = 'ar-SA';
+        rec.onresult = (e) => {
+          document.getElementById('searchInput').value = e.results[0][0].transcript;
+          renderTracks();
+        };
+        rec.start();
+      } else {
+        alert('البحث الصوتي غير مدعوم في متصفحك');
       }
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'ar-SA';
-      recognition.start();
-      recognition.onresult = (event) => {
-        let speechToText = event.results[0][0].transcript;
-        document.getElementById('searchInput').value = speechToText;
-        renderTracks();
-      };
     }
 
-    audio.onended = () => { 
-      if (repeatMode === 2) { 
-        audio.currentTime = 0; 
-        audio.play(); 
-      } else if (repeatMode === 1 || isShuffle) { 
-        nextTrack(); 
-      } else { 
-        let idx = initialTracks.findIndex(t => t.id === currentTrackId);
-        if(idx < initialTracks.length - 1) nextTrack();
-      }
-    };
-
-    audio.ontimeupdate = () => {
-      if(!audio.duration) return;
-      let val = (audio.currentTime / audio.duration) * 100;
-      document.getElementById('progressBar').value = val;
-      document.getElementById('miniProgressBar').value = val;
-      document.getElementById('currentTime').innerText = fmt(audio.currentTime);
-      document.getElementById('duration').innerText = fmt(audio.duration);
-
-      if (currentTrackId) {
-        localStorage.setItem('last_played_track', currentTrackId);
-        localStorage.setItem('last_played_time', audio.currentTime);
-      }
-    };
-
-    function seekTrack() { audio.currentTime = (document.getElementById('progressBar').value / 100) * audio.duration; }
-    function seekTrackMini() { audio.currentTime = (document.getElementById('miniProgressBar').value / 100) * audio.duration; }
-    function fmt(sec) { return Math.floor(sec/60) + ":" + (Math.floor(sec%60)<10?'0':'') + Math.floor(sec%60); }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      let lastTrack = localStorage.getItem('last_played_track');
-      let lastTime = parseFloat(localStorage.getItem('last_played_time')) || 0;
-      if (lastTrack) {
-        let t = initialTracks.find(x => x.id == lastTrack);
-        if (t) {
-          currentTrackId = t.id;
-          document.getElementById('miniTitle').innerText = t.title;
-          document.getElementById('miniArtist').innerText = t.artist;
-          document.getElementById('fullTitle').innerText = t.title;
-          document.getElementById('fullArtist').innerText = t.artist;
-          audio.src = t.url;
-          audio.onloadedmetadata = () => {
-            if (lastTime > 0 && lastTime < audio.duration) {
-              audio.currentTime = lastTime;
-            }
-          };
-        }
-      }
-    });
-
-    history.pushState(null, '', location.href);
-    window.addEventListener('popstate', function () {
-      if (!document.getElementById('authModal').classList.contains('hidden')) { closeAuthModal(); history.pushState(null, '', location.href); }
-      else if (!document.getElementById('commentsModal').classList.contains('hidden')) { closeCommentsModal(); history.pushState(null, '', location.href); }
-      else if (!document.getElementById('sleepModal').classList.contains('hidden')) { closeSleepModal(); history.pushState(null, '', location.href); }
-      else if (!document.getElementById('queueModal').classList.contains('hidden')) { closeQueueModal(); history.pushState(null, '', location.href); }
-      else if (!document.getElementById('fullPlayer').classList.contains('translate-y-full')) { closeFullPlayer(); history.pushState(null, '', location.href); }
-      else { history.pushState(null, '', location.href); }
-    });
+    // تهيئة مراقب أفعال المضيف عند البدء
+    setTimeout(() => {
+      attachGroupHostListeners();
+    }, 500);
 
     renderTracks();
   </script>
