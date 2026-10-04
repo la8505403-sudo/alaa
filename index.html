@@ -128,7 +128,7 @@
     </div>
     <div id="groupControlsLobby" class="flex gap-2">
      <button onclick="createGroupRoom()" class="flex-1 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs shadow hover:bg-emerald-400 transition-colors">إنشاء غرفة 🎧</button>
-     <input type="text" id="groupJoinInput" placeholder="كود الغرفة..." class="w-28 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-center text-xs focus:outline-none focus:border-emerald-500">
+     <input type="text" id="groupJoinInput" placeholder="كود الغرفة..." class="w-28 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-center text-xs focus:outline-none focus:border-emerald-500 uppercase">
      <button onclick="joinGroupRoom()" class="px-3 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs shadow hover:bg-blue-500 transition-colors">انضمام</button>
     </div>
     <div id="groupActiveInfo" class="hidden text-center text-xs space-y-1 pt-1">
@@ -240,7 +240,6 @@
     const playIconMini = document.getElementById('miniPlayIcon');
     const playIconFull = document.getElementById('fullPlayIcon');
 
-    // دوال المشغل الأساسية والتحكم
     function initApp() {
       updateUserProfileUI();
       renderTracks();
@@ -328,7 +327,16 @@
         currentTrackIndex = idx;
         loadAndPlayCurrentTrack();
         addToHistory(id);
-        openFullPlayer(); // فتح المشغل الكامل فوراً عند النقر على الأنشودة
+        openFullPlayer();
+        
+        // إذا كان المضيف يشغل أنشودة، يرسل التحديث لكل المتصلين بالغرفة تلقائياً
+        if (isHost && conn && conn.open) {
+          conn.send({
+            type: 'play_track',
+            trackId: id,
+            currentTime: audio.currentTime
+          });
+        }
       }
     }
 
@@ -422,14 +430,12 @@
       } else {
         currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
       }
-      loadAndPlayCurrentTrack();
-      addToHistory(tracks[currentTrackIndex].id);
+      playTrackById(tracks[currentTrackIndex].id);
     }
 
     function prevTrack() {
       currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-      loadAndPlayCurrentTrack();
-      addToHistory(tracks[currentTrackIndex].id);
+      playTrackById(tracks[currentTrackIndex].id);
     }
 
     function toggleShuffle() {
@@ -511,10 +517,8 @@
       document.getElementById('fullPlayer').classList.add('translate-y-full');
     }
 
-    // إعداد إيماءات اللمس (السحب يميناً/يساراً لتغيير الأنشودة، ولأسفل لإغلاق المشغل)
     function setupSwipeGestures() {
       const swipeCard = document.getElementById('swipeCard');
-      const fullPlayer = document.getElementById('fullPlayer');
       let touchStartX = 0;
       let touchStartY = 0;
       let touchEndX = 0;
@@ -535,16 +539,14 @@
         const diffX = touchEndX - touchStartX;
         const diffY = touchEndY - touchStartY;
 
-        // التحقق مما إذا كانت الحركة لأسفل بشكل أساسي
         if (Math.abs(diffY) > Math.abs(diffX)) {
           if (diffY > 60) {
-            closeFullPlayer(); // السحب للأسفل لإغلاق المشغل
+            closeFullPlayer();
           }
         } else {
-          // الحركة أفقية (يمين أو يسار)
           if (Math.abs(diffX) > 50) {
             if (diffX > 0) {
-              prevTrack(); // السحب لليسار/اليمين حسب الاتجاه
+              prevTrack();
             } else {
               nextTrack();
             }
@@ -678,7 +680,6 @@
       });
     }
 
-    // دوال تحريك نافذة مؤقت النوم والقفل
     let isModalLocked = false;
     function toggleModalLock() {
       isModalLocked = !isModalLocked;
@@ -733,12 +734,12 @@
       }
     }
 
-    // تهيئة نظام الاستماع الجماعي المباشر عبر PeerJS مع تحديث العداد
+    // نظام الاستماع الجماعي المحدث والمصحح
     let peer = null;
     let conn = null;
     let groupRoomCode = null;
     let isHost = false;
-    let connectedPeersCount = 1; // يبدأ بالمستخدم نفسه
+    let connectedPeersCount = 1;
 
     function updateGroupUsersCountUI() {
       const countSpan = document.getElementById('usersCountNum');
@@ -754,9 +755,13 @@
     }
 
     function createGroupRoom() {
-      peer = new Peer();
+      if (peer) { peer.destroy(); }
+      // إنشاء معرف غرفة قصير وسهل التنسيق
+      const customId = 'ALAA-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+      peer = new Peer(customId);
+      
       peer.on('open', (id) => {
-        groupRoomCode = id.substring(0, 6).toUpperCase();
+        groupRoomCode = id;
         isHost = true;
         connectedPeersCount = 1;
         updateGroupUsersCountUI();
@@ -769,21 +774,34 @@
 
       peer.on('connection', (connection) => {
         conn = connection;
+        setupPeerConnection();
         connectedPeersCount++;
         updateGroupUsersCountUI();
-        setupPeerConnection();
+      });
+
+      peer.on('error', (err) => {
+        console.error(err);
+        alert('حدث خطأ في إنشاء الغرفة، حاول مجدداً');
       });
     }
 
     function joinGroupRoom() {
-      const code = document.getElementById('groupJoinInput').value.trim().toLowerCase();
+      let code = document.getElementById('groupJoinInput').value.trim();
       if(!code) { alert('الرجاء إدخال كود الغرفة'); return; }
       
+      if (peer) { peer.destroy(); }
       peer = new Peer();
+      
       peer.on('open', (id) => {
         conn = peer.connect(code);
         isHost = false;
         setupPeerConnection();
+      });
+
+      peer.on('error', (err) => {
+        console.error(err);
+        alert('فشل الاتصال بالغرفة، تأكد من صحة الكود');
+        document.getElementById('groupStatus').textContent = 'فشل الاتصال';
       });
     }
 
@@ -793,22 +811,30 @@
         document.getElementById('groupStatus').className = 'text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold';
         document.getElementById('groupControlsLobby').classList.add('hidden');
         document.getElementById('groupActiveInfo').classList.remove('hidden');
-        if(isHost) {
-          document.getElementById('groupRoomDisplayCode').textContent = groupRoomCode;
-        } else {
-          connectedPeersCount = 2; // كمستمع انضم لمضيف
-          updateGroupUsersCountUI();
+        if(!isHost) {
           document.getElementById('groupRoomDisplayCode').textContent = "متصل بمضيف";
+          connectedPeersCount = 2;
+          updateGroupUsersCountUI();
         }
       });
 
       conn.on('data', (data) => {
         if(data.type === 'play_track') {
-          playTrackById(data.trackId);
-          audio.currentTime = data.currentTime;
+          const idx = tracks.findIndex(t => t.id === data.trackId);
+          if (idx !== -1) {
+            currentTrackIndex = idx;
+            audio.src = tracks[currentTrackIndex].url;
+            audio.currentTime = data.currentTime || 0;
+            audio.play().then(() => {
+              isPlaying = true;
+              updatePlayButtons();
+              updatePlayerUI();
+            });
+          }
         } else if(data.type === 'sync_action') {
-          if(data.action === 'play') audio.play();
-          if(data.action === 'pause') audio.pause();
+          if(data.action === 'play') { audio.play(); isPlaying = true; }
+          if(data.action === 'pause') { audio.pause(); isPlaying = false; }
+          updatePlayButtons();
         }
       });
 
@@ -819,7 +845,6 @@
       });
     }
 
-    // إرسال التحديثات إذا كان مضيفاً
     audio.addEventListener('play', () => {
       if(isHost && conn && conn.open) {
         conn.send({ type: 'sync_action', action: 'play' });
@@ -828,7 +853,7 @@
 
     audio.addEventListener('pause', () => {
       if(isHost && conn && conn.open) {
-        conn.send({ type: 'sync_action', action: 'sync_action', action: 'pause' });
+        conn.send({ type: 'sync_action', action: 'pause' });
       }
     });
 
