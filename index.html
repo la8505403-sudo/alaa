@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#030712">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>منصة الأناشيد</title>
+  <title>المنصة الإسلامية</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- استدعاء مكتبة PeerJS للاتصال المباشر بين الأصدقاء -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -26,6 +26,32 @@
   </style>
  </head>
  <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-28 select-none">
+  
+  <!-- واجهة الترحيب وقائمة الدخول -->
+  <div id="welcomeScreen" class="fixed inset-0 bg-slate-950 z-[200] flex items-center justify-center p-4 transition-opacity duration-500">
+   <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-6 text-center space-y-5 shadow-2xl relative">
+    <div class="w-16 h-16 rounded-2xl bg-black border border-slate-800 flex items-center justify-center font-bold text-xs text-white p-2 text-center leading-tight mx-auto shadow-inner">لا إله إلا الله</div>
+    <div class="space-y-1">
+     <h2 class="font-bold text-xl text-white">أهلاً بك في المنصة الإسلامية</h2>
+     <p class="text-xs text-slate-400">Alaa e mahmud</p>
+    </div>
+    
+    <!-- أزرار الاختيار في قائمة الدخول -->
+    <div class="grid grid-cols-2 gap-2 bg-slate-950 p-2 rounded-2xl border border-slate-800">
+     <button onclick="selectWelcomeTab('nasheeds')" id="welcomeBtnNasheeds" class="py-3 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow transition-all">
+      <i class="fa-solid fa-headphones-simple"></i> قسم الأناشيد
+     </button>
+     <button onclick="selectWelcomeTab('companions')" id="welcomeBtnCompanions" class="py-3 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-slate-900 text-slate-400 hover:bg-slate-800 transition-all">
+      <i class="fa-solid fa-book-open"></i> قصص الصحابة
+     </button>
+    </div>
+
+    <button onclick="enterPlatform()" class="w-full py-3.5 rounded-2xl bg-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all flex items-center justify-center gap-2">
+     <i class="fa-solid fa-arrow-right-to-bracket"></i> دخول للمنصة
+    </button>
+   </div>
+  </div>
+
   <!-- نافذة تسجيل الدخول -->
   <div id="authModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl relative">
@@ -46,12 +72,13 @@
     </div>
    </div>
   </div>
+
   <!-- نافذة التعليقات التفاعلية -->
   <div id="commentsModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl relative flex flex-col max-h-[85vh]">
     <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
      <div>
-      <h3 class="font-bold text-sm" id="commentsModalTitle">تعليقات الأنشودة</h3>
+      <h3 class="font-bold text-sm" id="commentsModalTitle">التعليقات</h3>
       <p class="text-[10px] text-slate-400">شاركنا رأيك أو انطباعك بكل احترام</p>
      </div>
      <button onclick="closeCommentsModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></button>
@@ -63,7 +90,8 @@
     </div>
    </div>
   </div>
-  <!-- نافذة مؤقت النوم القابلة للتحريك مع زر القفل -->
+
+  <!-- نافذة مؤقت النوم -->
   <div id="sleepModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
    <div id="sleepModalBox" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl relative cursor-move">
     <div class="flex justify-between items-center select-none" id="sleepModalHeader">
@@ -85,6 +113,7 @@
     <button onclick="setSleepTimer(0)" class="w-full py-2 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold">إلغاء المؤقت</button>
    </div>
   </div>
+
   <!-- نافذة قائمة الانتظار -->
   <div id="queueModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-3 shadow-2xl relative max-h-[80vh] flex flex-col">
@@ -95,6 +124,7 @@
     <div id="queueList" class="overflow-y-auto space-y-2 flex-1 pr-1"></div>
    </div>
   </div>
+
   <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 p-4">
    <div class="max-w-md mx-auto flex justify-between items-center">
     <div class="flex items-center gap-2">
@@ -103,7 +133,7 @@
     </div>
     <div class="flex items-center gap-3 text-left">
      <div>
-      <h1 class="font-bold text-lg leading-none">منصة الأناشيد</h1>
+      <h1 class="font-bold text-lg leading-none">المنصة الإسلامية</h1>
       <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Alaa e mahmud</p>
       <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">جميع الحقوق محفوظة © 2026</p>
      </div>
@@ -111,50 +141,93 @@
     </div>
    </div>
   </header>
+
   <main class="max-w-md mx-auto w-full p-4 flex-1 space-y-4">
-   <div class="relative flex items-center">
-    <i class="fa-solid fa-magnifying-glass absolute right-4 text-slate-400"></i> <input type="text" id="searchInput" oninput="renderTracks()" placeholder="ابحث عن أنشودة..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pr-11 pl-12 py-3 text-sm focus:outline-none focus:border-emerald-500">
-    <button onclick="startVoiceSearch()" class="absolute left-3 text-slate-400 hover:text-emerald-500 p-1" title="بحث صوتي"><i class="fa-solid fa-microphone text-sm"></i></button>
-   </div>
    
-   <!-- قسم الاستماع الجماعي المدمج بالواجهة مع عداد المتصلين -->
-   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm space-y-2">
-    <div class="flex items-center justify-between">
-     <span class="text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-headphones-simple text-emerald-500"></i> الاستماع الجماعي</span>
-     <div class="flex items-center gap-2">
-      <span id="groupUsersCount" class="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold hidden"><i class="fa-solid fa-users text-[9px] ml-1"></i><span id="usersCountNum">1</span> معك</span>
-      <span id="groupStatus" class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">غير متصل</span>
+   <!-- زر الرجوع لقائمة الاختيار الرئيسية -->
+   <div class="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-2xl shadow-sm">
+    <button onclick="returnToWelcome()" class="flex items-center gap-2 text-xs font-bold text-emerald-500 hover:text-emerald-400 transition-colors">
+     <i class="fa-solid fa-arrow-right"></i> العودة لقائمة الاختيار الرئيسية
+    </button>
+    <span class="text-[11px] text-slate-400" id="currentSectionTitleBadge">المنصة</span>
+   </div>
+
+   <!-- محتوى قسم الأناشيد -->
+   <div id="nasheedsSection" class="space-y-4">
+    <div class="relative flex items-center">
+     <i class="fa-solid fa-magnifying-glass absolute right-4 text-slate-400"></i> <input type="text" id="searchInput" oninput="renderTracks()" placeholder="ابحث عن أنشودة..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pr-11 pl-12 py-3 text-sm focus:outline-none focus:border-emerald-500">
+     <button onclick="startVoiceSearch()" class="absolute left-3 text-slate-400 hover:text-emerald-500 p-1" title="بحث صوتي"><i class="fa-solid fa-microphone text-sm"></i></button>
+    </div>
+
+    <!-- قسم الاستماع الجماعي المدمج بالواجهة مع عداد المتصلين -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm space-y-2">
+     <div class="flex items-center justify-between">
+      <span class="text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-headphones-simple text-emerald-500"></i> الاستماع الجماعي</span>
+      <div class="flex items-center gap-2">
+       <span id="groupUsersCount" class="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold hidden"><i class="fa-solid fa-users text-[9px] ml-1"></i><span id="usersCountNum">1</span> معك</span> <span id="groupStatus" class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">غير متصل</span>
+      </div>
+     </div>
+     <div id="groupControlsLobby" class="flex gap-2">
+      <button onclick="createGroupRoom()" class="flex-1 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs shadow hover:bg-emerald-400 transition-colors">إنشاء غرفة 🎧</button>
+      <input type="text" id="groupJoinInput" placeholder="كود الغرفة..." class="w-28 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-center text-xs focus:outline-none focus:border-emerald-500 uppercase">
+      <button onclick="joinGroupRoom()" class="px-3 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs shadow hover:bg-blue-500 transition-colors">انضمام</button>
+     </div>
+     <div id="groupActiveInfo" class="hidden text-center text-xs space-y-1 pt-1">
+      <p class="text-slate-400">كود غرفتك النشطة: <span id="groupRoomDisplayCode" class="text-emerald-500 font-bold select-all"></span></p>
      </div>
     </div>
-    <div id="groupControlsLobby" class="flex gap-2">
-     <button onclick="createGroupRoom()" class="flex-1 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs shadow hover:bg-emerald-400 transition-colors">إنشاء غرفة 🎧</button>
-     <input type="text" id="groupJoinInput" placeholder="كود الغرفة..." class="w-28 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-center text-xs focus:outline-none focus:border-emerald-500 uppercase">
-     <button onclick="joinGroupRoom()" class="px-3 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs shadow hover:bg-blue-500 transition-colors">انضمام</button>
+
+    <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs">
+     <button onclick="selectCategory('all')" id="filt_all" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0">الكل</button>
+     <button onclick="selectCategory('الشيخ سعد الغامدي')" id="filt_الشيخ سعد الغامدي" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">الشيخ سعد الغامدي</button>
+     <button onclick="selectCategory('ابو مصعب')" id="filt_ابو مصعب" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">ابو مصعب</button>
+     <button onclick="selectCategory('نايف الشرهان')" id="filt_نايف الشرهان" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">نايف الشرهان</button>
+     <button onclick="selectCategory('إدريس ابكر')" id="filt_إدريس ابكر" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">إدريس ابكر</button>
+     <button onclick="selectCategory('أسامة')" id="filt_أسامة" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">أسامة</button>
     </div>
-    <div id="groupActiveInfo" class="hidden text-center text-xs space-y-1 pt-1">
-     <p class="text-slate-400">كود غرفتك النشطة: <span id="groupRoomDisplayCode" class="text-emerald-500 font-bold select-all"></span></p>
+
+    <div class="flex gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 text-xs font-bold">
+     <button id="btnAll" onclick="setViewMode('all')" class="flex-1 py-2 rounded-lg bg-emerald-500 text-slate-950">الكل</button>
+     <button id="btnFav" onclick="setViewMode('favorites')" class="flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5"><i class="fa-solid fa-heart text-red-500"></i> المفضلة</button>
+     <button id="btnHistory" onclick="setViewMode('history')" class="flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-emerald-500"></i> السجل</button>
+    </div>
+
+    <div id="historyHeader" class="hidden flex justify-between items-center text-xs text-slate-500 px-1">
+     <span>الأناشيد المستمع إليها مؤخراً</span>
+     <button onclick="clearHistory()" class="text-red-400 hover:underline"><i class="fa-solid fa-trash-can"></i> مسح السجل</button>
+    </div>
+
+    <div id="tracksList" class="space-y-3"></div>
+   </div>
+
+   <!-- محتوى قسم قصص الصحابة -->
+   <div id="companionsSection" class="space-y-3 hidden">
+    <div class="space-y-3" id="companionsList">
+     <!-- قصة الصحابي الأول -->
+     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2">
+      <h3 class="font-bold text-base text-emerald-500">أبو بكر الصديق رضي الله عنه</h3>
+      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">هو عبد الله بن أبي قحافة، أول الخلفاء الراشدين، وأول من أسلم من الرجال الأحرار، ورفيق النبي صلى الله عليه وسلم في الهجرة وصاحبه في الغار...</p>
+     </div>
+     <!-- قصة الصحابي الثاني -->
+     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2">
+      <h3 class="font-bold text-base text-emerald-500">عمر بن الخطاب رضي الله عنه</h3>
+      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">أمير المؤمنين، ثاني الخلفاء الراشدين، الملقب بالفاروق لأنه فرق الله به بين الحق والباطل، اتسم بالعدل والقوة والشجاعة...</p>
+     </div>
+     <!-- قصة الصحابي الثالث -->
+     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2">
+      <h3 class="font-bold text-base text-emerald-500">عثمان بن عفان رضي الله عنه</h3>
+      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">ذو النورين، ثالث الخلفاء الراشدين، زوج رقية ثم أم كلثوم بنات النبي صلى الله عليه وسلم، اشتهر بالحياء والكرم العظيم...</p>
+     </div>
+     <!-- قصة الصحابي الرابع -->
+     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2">
+      <h3 class="font-bold text-base text-emerald-500">علي بن أبي طالب رضي الله عنه</h3>
+      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">ابن عم النبي صلى الله عليه وسلم وزوج ابنته فاطمة، رابع الخلفاء الراشدين، وباب مدينة العلم، ومن أبطال الإسلام الشجعان...</p>
+     </div>
     </div>
    </div>
 
-   <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs">
-    <button onclick="selectCategory('all')" id="filt_all" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold shrink-0">الكل</button>
-    <button onclick="selectCategory('الشيخ سعد الغامدي')" id="filt_الشيخ سعد الغامدي" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">الشيخ سعد الغامدي</button>
-    <button onclick="selectCategory('ابو مصعب')" id="filt_ابو مصعب" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">ابو مصعب</button>
-    <button onclick="selectCategory('نايف الشرهان')" id="filt_نايف الشرهان" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">نايف الشرهان</button>
-    <button onclick="selectCategory('إدريس ابكر')" id="filt_إدريس ابكر" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">إدريس ابكر</button>
-    <button onclick="selectCategory('أسامة')" id="filt_أسامة" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">أسامة</button>
-   </div>
-   <div class="flex gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 text-xs font-bold">
-    <button id="btnAll" onclick="setViewMode('all')" class="flex-1 py-2 rounded-lg bg-emerald-500 text-slate-950">الكل</button>
-    <button id="btnFav" onclick="setViewMode('favorites')" class="flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5"><i class="fa-solid fa-heart text-red-500"></i> المفضلة</button>
-    <button id="btnHistory" onclick="setViewMode('history')" class="flex-1 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-emerald-500"></i> السجل</button>
-   </div>
-   <div id="historyHeader" class="hidden flex justify-between items-center text-xs text-slate-500 px-1">
-    <span>الأناشيد المستمع إليها مؤخراً</span>
-    <button onclick="clearHistory()" class="text-red-400 hover:underline"><i class="fa-solid fa-trash-can"></i> مسح السجل</button>
-   </div>
-   <div id="tracksList" class="space-y-3"></div>
   </main>
+
   <!-- المشغل المصغّر -->
   <div id="miniPlayer" class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 z-40 shadow-lg">
    <div class="max-w-md mx-auto">
@@ -173,6 +246,7 @@
     </div>
    </div>
   </div>
+
   <!-- المشغل الكامل -->
   <div id="fullPlayer" class="fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 transition-transform duration-300 translate-y-full max-w-md mx-auto text-white">
    <div class="flex justify-between items-center pt-2">
@@ -209,6 +283,7 @@
     </div>
    </div>
   </div>
+
   <audio id="audioPlayer"></audio>
   <script>
     const initialTracks = [
@@ -235,6 +310,7 @@
     let historyTracks = JSON.parse(localStorage.getItem('history_' + currentUser)) || [];
     let trackComments = JSON.parse(localStorage.getItem('track_comments')) || {};
     let activeCommentTrackId = null;
+    let selectedWelcomeTab = 'nasheeds';
 
     const audio = document.getElementById('audioPlayer');
     const playIconMini = document.getElementById('miniPlayIcon');
@@ -248,6 +324,50 @@
       setupModalDragging();
       setupSwipeGestures();
       setupBackButtonHandler();
+    }
+
+    // دالة اختيار القسم من قائمة الدخول (الترحيب)
+    function selectWelcomeTab(tab) {
+      selectedWelcomeTab = tab;
+      const btnNasheeds = document.getElementById('welcomeBtnNasheeds');
+      const btnCompanions = document.getElementById('welcomeBtnCompanions');
+
+      if (tab === 'nasheeds') {
+        btnNasheeds.className = "py-3 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow transition-all";
+        btnCompanions.className = "py-3 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-slate-900 text-slate-400 hover:bg-slate-800 transition-all";
+      } else {
+        btnCompanions.className = "py-3 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow transition-all";
+        btnNasheeds.className = "py-3 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-slate-900 text-slate-400 hover:bg-slate-800 transition-all";
+      }
+    }
+
+    function enterPlatform() {
+      const welcome = document.getElementById('welcomeScreen');
+      welcome.style.opacity = '0';
+      setTimeout(() => {
+        welcome.classList.add('hidden');
+      }, 500);
+
+      const nasheedsSec = document.getElementById('nasheedsSection');
+      const companionsSec = document.getElementById('companionsSection');
+      const badge = document.getElementById('currentSectionTitleBadge');
+
+      if (selectedWelcomeTab === 'nasheeds') {
+        nasheedsSec.classList.remove('hidden');
+        companionsSec.classList.add('hidden');
+        badge.textContent = "قسم الأناشيد";
+      } else {
+        nasheedsSec.classList.add('hidden');
+        companionsSec.classList.remove('hidden');
+        badge.textContent = "قصص الصحابة";
+      }
+    }
+
+    // زر العودة لقائمة الاختيار الرئيسية
+    function returnToWelcome() {
+      const welcome = document.getElementById('welcomeScreen');
+      welcome.classList.remove('hidden');
+      welcome.style.opacity = '1';
     }
 
     function updateUserProfileUI() {
@@ -277,14 +397,16 @@
         currentUser = val;
         localStorage.setItem('current_user', currentUser);
         updateUserProfileUI();
-        history.back(); // إغلاق نافذة الدخول عبر العودة للسجل
+        history.back(); 
         renderTracks();
       }
     }
 
     function renderTracks() {
       const listEl = document.getElementById('tracksList');
-      const searchVal = document.getElementById('searchInput').value.toLowerCase();
+      const searchInputElem = document.getElementById('searchInput');
+      if (!listEl || !searchInputElem) return;
+      const searchVal = searchInputElem.value.toLowerCase();
       listEl.innerHTML = '';
 
       let sourceList = tracks;
@@ -515,7 +637,6 @@
       renderTracks();
     }
 
-    // إدارة فتح وإغلاق المشغل الكامل مع زر الرجوع
     function openFullPlayer() {
       history.pushState({ modal: 'fullPlayer' }, '');
       document.getElementById('fullPlayer').classList.remove('translate-y-full');
@@ -524,7 +645,6 @@
       document.getElementById('fullPlayer').classList.add('translate-y-full');
     }
 
-    // نظام اعتراض زر الرجوع في الجهاز
     function setupBackButtonHandler() {
       window.addEventListener('popstate', (event) => {
         const fullPlayer = document.getElementById('fullPlayer');
@@ -571,7 +691,7 @@
 
         if (Math.abs(diffY) > Math.abs(diffX)) {
           if (diffY > 60) {
-            history.back(); // إغلاق بالرجوع للخلف برمجياً
+            history.back(); 
           }
         } else {
           if (Math.abs(diffX) > 50) {
@@ -760,7 +880,7 @@
 
       function drag(e) {
         if (!isDragging || isModalLocked) return;
-        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientY;
         const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
         currentX = clientX - startX;
         currentY = clientY - startY;
@@ -772,7 +892,6 @@
       }
     }
 
-    // نظام الاستماع الجماعي المحدث
     let peer = null;
     let conn = null;
     let groupRoomCode = null;
@@ -890,7 +1009,7 @@
 
     audio.addEventListener('pause', () => {
       if(isHost && conn && conn.open) {
-        conn.send({ type: 'sync_action', action: 'sync_action', action: 'pause' });
+        conn.send({ type: 'sync_action', action: 'pause' });
       }
     });
 
