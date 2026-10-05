@@ -114,14 +114,19 @@
    </div>
   </div>
 
-  <!-- نافذة قائمة الانتظار -->
+  <!-- نافذة قائمة التشغيل المخصصة -->
   <div id="queueModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
-   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-3 shadow-2xl relative max-h-[80vh] flex flex-col">
-    <div class="flex justify-between items-center">
-     <h3 class="font-bold text-sm">قائمة التشغيل التالية</h3>
+   <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-3 shadow-2xl relative max-h-[85vh] flex flex-col">
+    <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+     <h3 class="font-bold text-sm">قائمة التشغيل المخصصة</h3>
      <button onclick="closeQueueModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
     </div>
+    <div class="flex gap-2 text-xs">
+     <button onclick="selectAllQueue(true)" class="flex-1 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold">تحديد الكل</button>
+     <button onclick="selectAllQueue(false)" class="flex-1 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold">إلغاء التحديد</button>
+    </div>
     <div id="queueList" class="overflow-y-auto space-y-2 flex-1 pr-1"></div>
+    <button onclick="playCustomQueue()" class="w-full py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs shadow hover:bg-emerald-400 transition-colors">تشغيل المحدد فقط 🎧</button>
    </div>
   </div>
 
@@ -203,25 +208,18 @@
    <!-- محتوى قسم قصص الصحابة -->
    <div id="companionsSection" class="space-y-3 hidden">
     <div class="space-y-3" id="companionsList">
-     <!-- قصة الصحابي الأول -->
-     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2">
-      <h3 class="font-bold text-base text-emerald-500">أبو بكر الصديق رضي الله عنه</h3>
-      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">هو عبد الله بن أبي قحافة، أول الخلفاء الراشدين، وأول من أسلم من الرجال الأحرار، ورفيق النبي صلى الله عليه وسلم في الهجرة وصاحبه في الغار...</p>
-     </div>
-     <!-- قصة الصحابي الثاني -->
-     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2">
-      <h3 class="font-bold text-base text-emerald-500">عمر بن الخطاب رضي الله عنه</h3>
-      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">أمير المؤمنين، ثاني الخلفاء الراشدين، الملقب بالفاروق لأنه فرق الله به بين الحق والباطل، اتسم بالعدل والقوة والشجاعة...</p>
-     </div>
-     <!-- قصة الصحابي الثالث -->
-     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2">
-      <h3 class="font-bold text-base text-emerald-500">عثمان بن عفان رضي الله عنه</h3>
-      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">ذو النورين، ثالث الخلفاء الراشدين، زوج رقية ثم أم كلثوم بنات النبي صلى الله عليه وسلم، اشتهر بالحياء والكرم العظيم...</p>
-     </div>
-     <!-- قصة الصحابي الرابع -->
-     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2">
-      <h3 class="font-bold text-base text-emerald-500">علي بن أبي طالب رضي الله عنه</h3>
-      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">ابن عم النبي صلى الله عليه وسلم وزوج ابنته فاطمة، رابع الخلفاء الراشدين، وباب مدينة العلم، ومن أبطال الإسلام الشجعان...</p>
+     <div class="p-3 rounded-2xl border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 transition-all flex items-center justify-between">
+      <div class="flex items-center gap-3 overflow-hidden cursor-pointer flex-1" onclick="playCompanionTrack()">
+       <div class="w-11 h-11 rounded-xl overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">لا إله إلا الله</div>
+       <div class="truncate">
+        <h4 id="companionTitle" class="font-bold text-sm truncate text-emerald-500">سيرة عمر بن عبد العزيز</h4>
+        <p id="companionArtist" class="text-xs text-slate-400 truncate">نبيل العوضي • استماع صوتي</p>
+       </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+       <button onclick="openCompanionComments()" class="text-slate-400 hover:text-emerald-500 p-2 text-xs" title="التعليقات"><i class="fa-regular fa-comment"></i></button>
+       <button onclick="toggleCompanionFavorite()" id="companionFavBtn" class="text-sm p-2 text-slate-400 hover:text-red-500"><i class="fa-regular fa-heart"></i></button>
+      </div>
      </div>
     </div>
    </div>
@@ -236,7 +234,7 @@
      <div class="flex items-center gap-3 overflow-hidden">
       <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">لا إله إلا الله</div>
       <div class="truncate">
-       <h4 id="miniTitle" class="font-bold text-sm truncate">اختر أنشودة</h4>
+       <h4 id="miniTitle" class="font-bold text-sm truncate">اختر عنصرًا للتشغيل</h4>
        <p id="miniArtist" class="text-xs text-slate-400 truncate">--</p>
       </div>
      </div>
@@ -254,15 +252,15 @@
     <button onclick="closeFullPlayer()" class="text-2xl p-1"><i class="fa-solid fa-chevron-down"></i></button>
    </div>
    <div class="my-auto py-2 flex flex-col items-center w-full">
-    <div id="swipeCard" class="relative w-64 h-64 rounded-3xl overflow-hidden border border-slate-800 bg-black shadow-2xl my-4 flex flex-col items-center justify-center text-center p-6 cursor-grab active:cursor-grabbing">
+    <div id="swipeCard" class="relative w-64 h-64 rounded-3xl overflow-hidden border border-slate-800 bg-black shadow-2xl my-4 flex flex-col items-center justify-center text-center p-6 cursor-grab active:cursor-grabbing select-none">
      <span class="text-2xl font-bold text-white select-none">لا إله إلا الله</span>
     </div>
-    <h2 id="fullTitle" class="text-lg font-bold truncate px-4">اختر أنشودة</h2>
+    <h2 id="fullTitle" class="text-lg font-bold truncate px-4">اختر عنصرًا للتشغيل</h2>
     <p id="fullArtist" class="text-xs text-slate-300 mt-1">--</p>
     <div class="flex items-center gap-4 mt-4">
      <button id="fullFavBtn" onclick="toggleCurrentFavorite()" class="text-xl text-slate-300"><i class="fa-regular fa-star"></i></button>
-     <button onclick="shareCurrentTrack()" class="text-xl text-slate-300" title="مشاركة الأنشودة"><i class="fa-solid fa-share-nodes"></i></button>
-     <button onclick="downloadCurrentTrack()" class="text-xl text-slate-300" title="تحميل الأنشودة"><i class="fa-solid fa-download"></i></button>
+     <button onclick="shareCurrentTrack()" class="text-xl text-slate-300" title="مشاركة الملف"><i class="fa-solid fa-share-nodes"></i></button>
+     <button onclick="downloadCurrentTrack()" class="text-xl text-slate-300" title="تحميل الملف"><i class="fa-solid fa-download"></i></button>
     </div>
    </div>
    <div class="space-y-4 mb-4 w-full">
@@ -274,12 +272,12 @@
      <i class="fa-solid fa-volume-low text-xs"></i> <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg cursor-pointer"> <i class="fa-solid fa-volume-high text-xs"></i>
     </div>
     <div class="flex items-center justify-between px-2 pt-2">
-     <button onclick="openQueueModal()" class="text-slate-300 text-lg"><i class="fa-solid fa-list-ul"></i></button>
-     <button onclick="toggleShuffle()" id="shuffleBtn" class="text-slate-300 text-lg" title="تشغيل عشوائي"><i class="fa-solid fa-shuffle"></i></button>
-     <button onclick="prevTrack()" class="text-white text-xl"><i class="fa-solid fa-backward-step"></i></button>
+     <button onclick="openQueueModal()" class="text-slate-300 text-lg" title="قائمة التشغيل"><i class="fa-solid fa-list-ul"></i></button>
+     <button onclick="skipTime(-10)" class="text-slate-300 text-lg" title="إرجاع 10 ثوانٍ"><i class="fa-solid fa-rotate-left"></i></button>
+     <button onclick="prevTrack()" class="text-white text-xl" title="السابق"><i class="fa-solid fa-backward-step"></i></button>
      <button onclick="togglePlay()" class="w-16 h-16 rounded-full bg-white/20 text-white flex items-center justify-center text-2xl shadow"><i id="fullPlayIcon" class="fa-solid fa-play"></i></button>
-     <button onclick="nextTrack()" class="text-white text-xl"><i class="fa-solid fa-forward-step"></i></button>
-     <button id="repeatBtn" onclick="toggleRepeat()" class="text-slate-300 text-lg" title="تكرار"><i class="fa-solid fa-repeat"></i></button>
+     <button onclick="nextTrack()" class="text-white text-xl" title="التالي"><i class="fa-solid fa-forward-step"></i></button>
+     <button onclick="skipTime(10)" class="text-slate-300 text-lg" title="تقديم 10 ثوانٍ"><i class="fa-solid fa-rotate-right"></i></button>
     </div>
    </div>
   </div>
@@ -295,7 +293,8 @@
       { id: 6, title: "يالادمي", artist: "ابو مصعب", category: "ابو مصعب", url: "https://files.catbox.moe/rjlmfg.mp3", duration: "--:--" },
       { id: 7, title: "الكاذبون على المدي", artist: "نايف الشرهان", category: "نايف الشرهان", url: "https://files.catbox.moe/dtpoc8.mp3", duration: "--:--" },
       { id: 8, title: "عشق هنا", artist: "نايف الشرهان", category: "نايف الشرهان", url: "https://files.catbox.moe/037ern.mp3", duration: "--:--" },
-      { id: 9, title: "احببتها منذ الصغر", artist: "إدريس ابكر", category: "إدريس ابكر", url: "https://files.catbox.moe/95m7s8.mp3", duration: "--:--" }
+      { id: 9, title: "احببتها منذ الصغر", artist: "إدريس ابكر", category: "إدريس ابكر", url: "https://files.catbox.moe/95m7s8.mp3", duration: "--:--" },
+      { id: 10, title: "سيرة عمر بن عبد العزيز", artist: "نبيل العوضي", category: "companions", url: "https://files.catbox.moe/ooibrc.mp3", duration: "--:--" }
     ];
 
     let tracks = [...initialTracks];
@@ -311,6 +310,7 @@
     let trackComments = JSON.parse(localStorage.getItem('track_comments')) || {};
     let activeCommentTrackId = null;
     let selectedWelcomeTab = 'nasheeds';
+    let customPlaylistQueue = [];
 
     const audio = document.getElementById('audioPlayer');
     const playIconMini = document.getElementById('miniPlayIcon');
@@ -326,7 +326,6 @@
       setupBackButtonHandler();
     }
 
-    // دالة اختيار القسم من قائمة الدخول (الترحيب)
     function selectWelcomeTab(tab) {
       selectedWelcomeTab = tab;
       const btnNasheeds = document.getElementById('welcomeBtnNasheeds');
@@ -363,7 +362,6 @@
       }
     }
 
-    // زر العودة لقائمة الاختيار الرئيسية
     function returnToWelcome() {
       const welcome = document.getElementById('welcomeScreen');
       welcome.classList.remove('hidden');
@@ -381,6 +379,7 @@
         favorites = [];
         historyTracks = [];
       }
+      updateCompanionUI();
     }
 
     function openAuthModal() {
@@ -409,11 +408,11 @@
       const searchVal = searchInputElem.value.toLowerCase();
       listEl.innerHTML = '';
 
-      let sourceList = tracks;
+      let sourceList = tracks.filter(t => t.category !== 'companions');
       if (viewMode === 'favorites') {
-        sourceList = tracks.filter(t => favorites.includes(t.id));
+        sourceList = sourceList.filter(t => favorites.includes(t.id));
       } else if (viewMode === 'history') {
-        sourceList = historyTracks.map(id => tracks.find(t => t.id === id)).filter(Boolean);
+        sourceList = historyTracks.map(id => tracks.find(t => t.id === id && t.category !== 'companions')).filter(Boolean);
       }
 
       const filtered = sourceList.filter(t => {
@@ -447,6 +446,23 @@
         `;
         listEl.appendChild(card);
       });
+    }
+
+    function playCompanionTrack() {
+      playTrackById(10);
+    }
+    function toggleCompanionFavorite() {
+      toggleFavorite(10);
+    }
+    function openCompanionComments() {
+      openComments(10);
+    }
+    function updateCompanionUI() {
+      const isFav = favorites.includes(10);
+      const favBtn = document.getElementById('companionFavBtn');
+      if(favBtn) {
+        favBtn.innerHTML = `<i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular'} fa-heart"></i>`;
+      }
     }
 
     function playTrackById(id) {
@@ -508,6 +524,7 @@
       const favBtn = document.getElementById('fullFavBtn');
       favBtn.innerHTML = `<i class="${isFav ? 'fa-solid text-red-500' : 'fa-regular'} fa-star"></i>`;
       renderTracks();
+      updateCompanionUI();
     }
 
     function setupAudioEvents() {
@@ -547,22 +564,69 @@
       audio.currentTime = (val / 100) * audio.duration;
     }
 
+    function skipTime(seconds) {
+      if (!isNaN(audio.duration)) {
+        audio.currentTime = Math.min(Math.max(audio.currentTime + seconds, 0), audio.duration);
+      }
+    }
+
     function changeVolume(val) {
       audio.volume = val;
     }
 
     function nextTrack() {
-      if (isShuffle) {
-        currentTrackIndex = Math.floor(Math.random() * tracks.length);
-      } else {
-        currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+      if (tracks[currentTrackIndex].id === 10) return;
+
+      if (customPlaylistQueue.length > 0) {
+        let currentPos = customPlaylistQueue.indexOf(tracks[currentTrackIndex].id);
+        if (currentPos !== -1 && currentPos < customPlaylistQueue.length - 1) {
+          playTrackById(customPlaylistQueue[currentPos + 1]);
+          return;
+        } else {
+          audio.pause();
+          isPlaying = false;
+          updatePlayButtons();
+          return;
+        }
       }
-      playTrackById(tracks[currentTrackIndex].id);
+
+      let nasheeds = tracks.filter(t => t.category !== 'companions');
+      let currentNasheedSubIndex = nasheeds.findIndex(t => t.id === tracks[currentTrackIndex].id);
+      
+      if (currentNasheedSubIndex !== -1) {
+        if (isShuffle) {
+          let randIdx;
+          do {
+            randIdx = Math.floor(Math.random() * nasheeds.length);
+          } while (randIdx === currentNasheedSubIndex && nasheeds.length > 1);
+          currentTrackIndex = tracks.findIndex(t => t.id === nasheeds[randIdx].id);
+        } else {
+          currentNasheedSubIndex = (currentNasheedSubIndex + 1) % nasheeds.length;
+          currentTrackIndex = tracks.findIndex(t => t.id === nasheeds[currentNasheedSubIndex].id);
+        }
+        playTrackById(tracks[currentTrackIndex].id);
+      }
     }
 
     function prevTrack() {
-      currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-      playTrackById(tracks[currentTrackIndex].id);
+      if (tracks[currentTrackIndex].id === 10) return;
+
+      if (customPlaylistQueue.length > 0) {
+        let currentPos = customPlaylistQueue.indexOf(tracks[currentTrackIndex].id);
+        if (currentPos > 0) {
+          playTrackById(customPlaylistQueue[currentPos - 1]);
+          return;
+        }
+      }
+
+      let nasheeds = tracks.filter(t => t.category !== 'companions');
+      let currentNasheedSubIndex = nasheeds.findIndex(t => t.id === tracks[currentTrackIndex].id);
+      
+      if (currentNasheedSubIndex !== -1) {
+        currentNasheedSubIndex = (currentNasheedSubIndex - 1 + nasheeds.length) % nasheeds.length;
+        currentTrackIndex = tracks.findIndex(t => t.id === nasheeds[currentNasheedSubIndex].id);
+        playTrackById(tracks[currentTrackIndex].id);
+      }
     }
 
     function toggleShuffle() {
@@ -598,7 +662,7 @@
     }
 
     function addToHistory(id) {
-      if (!currentUser) return;
+      if (!currentUser || id === 10) return;
       historyTracks = historyTracks.filter(item => item !== id);
       historyTracks.unshift(id);
       if (historyTracks.length > 20) historyTracks.pop();
@@ -695,6 +759,7 @@
           }
         } else {
           if (Math.abs(diffX) > 50) {
+            if (tracks[currentTrackIndex].id === 10) return;
             if (diffX > 0) {
               prevTrack();
             } else {
@@ -755,16 +820,40 @@
       renderQueueList(); 
     }
     function closeQueueModal() { document.getElementById('queueModal').classList.add('hidden'); }
+    
     function renderQueueList() {
       const q = document.getElementById('queueList');
       q.innerHTML = '';
-      tracks.forEach((t, idx) => {
-        const div = document.createElement('div');
-        div.className = `p-2 rounded-xl text-xs flex justify-between items-center cursor-pointer ${idx === currentTrackIndex ? 'bg-emerald-500/20 text-emerald-400 font-bold' : 'hover:bg-slate-800'}`;
-        div.innerHTML = `<span>${t.title} - ${t.artist}</span>`;
-        div.onclick = () => { playTrackById(t.id); history.back(); };
+      tracks.filter(t => t.category !== 'companions').forEach((t) => {
+        const isChecked = customPlaylistQueue.length === 0 || customPlaylistQueue.includes(t.id);
+        const div = document.createElement('label');
+        div.className = `p-2.5 rounded-xl text-xs flex items-center justify-between cursor-pointer bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors`;
+        div.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <input type="checkbox" value="${t.id}" class="queue-checkbox accent-emerald-500 w-4 h-4 rounded cursor-pointer" ${isChecked ? 'checked' : ''}>
+            <span>${t.title} - ${t.artist}</span>
+          </div>
+        `;
         q.appendChild(div);
       });
+    }
+
+    function selectAllQueue(status) {
+      const checkboxes = document.querySelectorAll('.queue-checkbox');
+      checkboxes.forEach(cb => cb.checked = status);
+    }
+
+    function playCustomQueue() {
+      const checkboxes = document.querySelectorAll('.queue-checkbox:checked');
+      customPlaylistQueue = Array.from(checkboxes).map(cb => parseInt(cb.value));
+      
+      if (customPlaylistQueue.length === 0) {
+        alert('الرجاء تحديد أنشودة واحدة على الأقل');
+        return;
+      }
+      
+      closeQueueModal();
+      playTrackById(customPlaylistQueue[0]);
     }
 
     function openSleepModal() { 
@@ -812,10 +901,10 @@
     function shareCurrentTrack() {
       const t = tracks[currentTrackIndex];
       if(navigator.share) {
-        navigator.share({ title: t.title, text: `استمع إلى أنشودة ${t.title} للشيخ/المنشد ${t.artist}`, url: t.url });
+        navigator.share({ title: t.title, text: `استمع إلى ${t.title} - ${t.artist}`, url: t.url });
       } else {
         navigator.clipboard.writeText(t.url);
-        alert('تم نسخ رابط الأنشودة');
+        alert('تم نسخ الرابط');
       }
     }
 
@@ -880,7 +969,7 @@
 
       function drag(e) {
         if (!isDragging || isModalLocked) return;
-        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientY;
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
         const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
         currentX = clientX - startX;
         currentY = clientY - startY;
@@ -976,7 +1065,8 @@
 
       conn.on('data', (data) => {
         if(data.type === 'play_track') {
-          const idx = tracks.findIndex(t => t.id === data.trackId);
+          const dataTrackId = data.trackId;
+          const idx = tracks.findIndex(t => t.id === dataTrackId);
           if (idx !== -1) {
             currentTrackIndex = idx;
             audio.src = tracks[currentTrackIndex].url;
@@ -1020,3 +1110,4 @@
   </script>
  </body>
 </html>
+ 
