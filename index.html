@@ -23,6 +23,10 @@
     body { font-family: 'Tajawal', sans-serif; }
     #sleepModalBox { touch-action: none; position: relative; }
     #fullPlayer { touch-action: pan-y; }
+    /* جعل شريط التقدم يبدأ من اليسار */
+    input[type="range"].ltr-progress {
+      direction: ltr;
+    }
   </style>
  </head>
  <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-28 select-none">
@@ -189,6 +193,7 @@
      <button onclick="selectCategory('نايف الشرهان')" id="filt_نايف الشرهان" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">نايف الشرهان</button>
      <button onclick="selectCategory('إدريس ابكر')" id="filt_إدريس ابكر" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">إدريس ابكر</button>
      <button onclick="selectCategory('أسامة')" id="filt_أسامة" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">أسامة</button>
+     <button onclick="selectCategory('companions')" id="filt_companions" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-slate-300 border border-slate-200 dark:border-slate-800 shrink-0">قصص الصحابة</button>
     </div>
 
     <div class="flex gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 text-xs font-bold">
@@ -245,7 +250,8 @@
   <!-- المشغل المصغّر -->
   <div id="miniPlayer" class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 z-40 shadow-lg">
    <div class="max-w-md mx-auto">
-    <input type="range" id="miniProgressBar" value="0" min="0" max="100" step="0.1" oninput="seekTrackMini()" class="w-full accent-emerald-500 h-1 bg-slate-200 dark:bg-slate-800 appearance-none cursor-pointer">
+    <!-- شريط التقدم المصغر يبدأ من اليسار -->
+    <input type="range" id="miniProgressBar" value="0" min="0" max="100" step="0.1" oninput="seekTrackMini()" class="w-full accent-emerald-500 h-1 bg-slate-200 dark:bg-slate-800 appearance-none cursor-pointer ltr-progress">
     <div onclick="openFullPlayer()" class="px-4 py-2.5 flex items-center justify-between cursor-pointer">
      <div class="flex items-center gap-3 overflow-hidden">
       <div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-800 bg-black shrink-0 flex items-center justify-center font-bold text-[9px] text-white p-1 text-center leading-tight">لا إله إلا الله</div>
@@ -288,35 +294,36 @@
      </button>
      <div id="volumeContainer" class="hidden items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex-1 shadow-md">
       <i class="fa-solid fa-volume-low text-xs text-slate-400"></i> 
-      <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg cursor-pointer"> 
+      <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg cursor-pointer ltr-progress"> 
       <i class="fa-solid fa-volume-high text-xs text-slate-400"></i>
      </div>
     </div>
 
-    <!-- أزرار التحكم والتقديم/الإرجاع فوق شريط الوقت مباشرة -->
+    <!-- أزرار التحكم بالصوت (تم ضبط الأيقونات لتطابق الصورة والاتجاهات الصحيحة تماماً: اليمين لليمين واليسار لليسار) -->
     <div class="flex items-center justify-between px-2 pt-2">
-     <button onclick="openQueueModal()" class="text-slate-300 text-lg" title="قائمة التشغيل"><i class="fa-solid fa-list-ul"></i></button>
+     <button onclick="toggleShuffle()" id="shuffleBtn" class="text-slate-300 text-lg" title="خلط"><i class="fa-solid fa-shuffle"></i></button>
      
      <button onclick="skipTime(-10)" class="flex items-center gap-1 bg-slate-900/80 border border-slate-800 px-2.5 py-1.5 rounded-xl text-slate-200 hover:text-emerald-400 text-xs font-bold transition-all" title="إرجاع 10 ثوانٍ">
       <i class="fa-solid fa-rotate-left text-[11px]"></i> <span>10-</span>
      </button>
 
-     <button onclick="prevTrack()" class="text-white text-xl p-1" title="السابق"><i class="fa-solid fa-backward-step"></i></button>
-     <button onclick="togglePlay()" class="w-16 h-16 rounded-full bg-white/20 text-white flex items-center justify-center text-2xl shadow"><i id="fullPlayIcon" class="fa-solid fa-play"></i></button>
-     <button onclick="nextTrack()" class="text-white text-xl p-1" title="التالي"><i class="fa-solid fa-forward-step"></i></button>
+     <!-- الأزرار المعدلة: زر التالي على اليمين وزر السابق على اليسار ليتطابق مع الصورة -->
+     <button onclick="nextTrack()" class="text-white text-3xl p-1 hover:text-emerald-400 transition-colors" title="التالي"><i class="fa-solid fa-forward-step"></i></button>
+     <button onclick="togglePlay()" class="w-20 h-20 rounded-full bg-slate-800/80 hover:bg-slate-700 text-white flex items-center justify-center text-3xl shadow-xl border border-slate-700 transition-all"><i id="fullPlayIcon" class="fa-solid fa-play ml-0.5"></i></button>
+     <button onclick="prevTrack()" class="text-white text-3xl p-1 hover:text-emerald-400 transition-colors" title="السابق"><i class="fa-solid fa-backward-step"></i></button>
 
      <button onclick="skipTime(10)" class="flex items-center gap-1 bg-slate-900/80 border border-slate-800 px-2.5 py-1.5 rounded-xl text-slate-200 hover:text-emerald-400 text-xs font-bold transition-all" title="تقديم 10 ثوانٍ">
       <span>10+</span> <i class="fa-solid fa-rotate-right text-[11px]"></i>
      </button>
 
-     <button onclick="toggleShuffle()" id="shuffleBtn" class="text-slate-300 text-lg" title="خلط"><i class="fa-solid fa-shuffle"></i></button>
+     <button onclick="openQueueModal()" class="text-slate-300 text-lg" title="قائمة التشغيل"><i class="fa-solid fa-list-ul"></i></button>
     </div>
 
-    <!-- شريط الوقت والأوقات بالأسفل -->
+    <!-- شريط الوقت الكامل يبدأ من اليسار مع أوقاته المتناسقة -->
     <div class="space-y-1">
-     <input type="range" id="progressBar" value="0" min="0" max="100" step="0.1" oninput="seekTrack()" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg cursor-pointer">
+     <input type="range" id="progressBar" value="0" min="0" max="100" step="0.1" oninput="seekTrack()" class="w-full accent-emerald-400 h-1 bg-slate-800 rounded-lg cursor-pointer ltr-progress">
      <div class="flex justify-between text-[11px] text-slate-300 px-1">
-      <span id="currentTime">0:00</span> <span id="duration">0:00</span>
+      <span id="duration">0:00</span> <span id="currentTime">0:00</span>
      </div>
     </div>
 
@@ -397,11 +404,14 @@
         nasheedsSec.classList.remove('hidden');
         companionsSec.classList.add('hidden');
         badge.textContent = "قسم الأناشيد";
+        currentCategory = 'all';
       } else {
         nasheedsSec.classList.add('hidden');
         companionsSec.classList.remove('hidden');
         badge.textContent = "قصص الصحابة";
+        currentCategory = 'companions';
       }
+      selectCategory(currentCategory);
     }
 
     function returnToWelcome() {
@@ -629,56 +639,43 @@
     }
 
     function nextTrack() {
-      if (tracks[currentTrackIndex].category === 'companions') return;
-
-      if (customPlaylistQueue.length > 0) {
-        let currentPos = customPlaylistQueue.indexOf(tracks[currentTrackIndex].id);
-        if (currentPos !== -1 && currentPos < customPlaylistQueue.length - 1) {
-          playTrackById(customPlaylistQueue[currentPos + 1]);
-          return;
-        } else {
-          audio.pause();
-          isPlaying = false;
-          updatePlayButtons();
-          return;
-        }
+      let activeList = tracks;
+      if (tracks[currentTrackIndex].category === 'companions') {
+        activeList = tracks.filter(t => t.category === 'companions');
+      } else {
+        activeList = tracks.filter(t => t.category !== 'companions');
       }
 
-      let nasheeds = tracks.filter(t => t.category !== 'companions');
-      let currentNasheedSubIndex = nasheeds.findIndex(t => t.id === tracks[currentTrackIndex].id);
+      let currentSubIdx = activeList.findIndex(t => t.id === tracks[currentTrackIndex].id);
       
-      if (currentNasheedSubIndex !== -1) {
+      if (currentSubIdx !== -1) {
         if (isShuffle) {
           let randIdx;
           do {
-            randIdx = Math.floor(Math.random() * nasheeds.length);
-          } while (randIdx === currentNasheedSubIndex && nasheeds.length > 1);
-          currentTrackIndex = tracks.findIndex(t => t.id === nasheeds[randIdx].id);
+            randIdx = Math.floor(Math.random() * activeList.length);
+          } while (randIdx === currentSubIdx && activeList.length > 1);
+          currentTrackIndex = tracks.findIndex(t => t.id === activeList[randIdx].id);
         } else {
-          currentNasheedSubIndex = (currentNasheedSubIndex + 1) % nasheeds.length;
-          currentTrackIndex = tracks.findIndex(t => t.id === nasheeds[currentNasheedSubIndex].id);
+          currentSubIdx = (currentSubIdx + 1) % activeList.length;
+          currentTrackIndex = tracks.findIndex(t => t.id === activeList[currentSubIdx].id);
         }
         playTrackById(tracks[currentTrackIndex].id);
       }
     }
 
     function prevTrack() {
-      if (tracks[currentTrackIndex].category === 'companions') return;
-
-      if (customPlaylistQueue.length > 0) {
-        let currentPos = customPlaylistQueue.indexOf(tracks[currentTrackIndex].id);
-        if (currentPos > 0) {
-          playTrackById(customPlaylistQueue[currentPos - 1]);
-          return;
-        }
+      let activeList = tracks;
+      if (tracks[currentTrackIndex].category === 'companions') {
+        activeList = tracks.filter(t => t.category === 'companions');
+      } else {
+        activeList = tracks.filter(t => t.category !== 'companions');
       }
 
-      let nasheeds = tracks.filter(t => t.category !== 'companions');
-      let currentNasheedSubIndex = nasheeds.findIndex(t => t.id === tracks[currentTrackIndex].id);
+      let currentSubIdx = activeList.findIndex(t => t.id === tracks[currentTrackIndex].id);
       
-      if (currentNasheedSubIndex !== -1) {
-        currentNasheedSubIndex = (currentNasheedSubIndex - 1 + nasheeds.length) % nasheeds.length;
-        currentTrackIndex = tracks.findIndex(t => t.id === nasheeds[currentNasheedSubIndex].id);
+      if (currentSubIdx !== -1) {
+        currentSubIdx = (currentSubIdx - 1 + activeList.length) % activeList.length;
+        currentTrackIndex = tracks.findIndex(t => t.id === activeList[currentSubIdx].id);
         playTrackById(tracks[currentTrackIndex].id);
       }
     }
@@ -736,7 +733,8 @@
 
     function selectCategory(cat) {
       currentCategory = cat;
-      ['all', 'الشيخ سعد الغامدي', 'ابو مصعب', 'نايف الشرهان', 'إدريس ابكر', 'أسامة'].forEach(c => {
+      
+      ['all', 'الشيخ سعد الغامدي', 'ابو مصعب', 'نايف الشرهان', 'إدريس ابكر', 'أسامة', 'companions'].forEach(c => {
         const btn = document.getElementById('filt_' + c);
         if (btn) {
           if (c === cat) {
@@ -746,7 +744,23 @@
           }
         }
       });
-      renderTracks();
+
+      const nasheedsSec = document.getElementById('nasheedsSection');
+      const companionsSec = document.getElementById('companionsSection');
+      const badge = document.getElementById('currentSectionTitleBadge');
+
+      if (cat === 'companions') {
+        nasheedsSec.classList.add('hidden');
+        companionsSec.classList.remove('hidden');
+        badge.textContent = "قصص الصحابة";
+        selectedWelcomeTab = 'companions';
+      } else {
+        nasheedsSec.classList.remove('hidden');
+        companionsSec.classList.add('hidden');
+        badge.textContent = "قسم الأناشيد";
+        selectedWelcomeTab = 'nasheeds';
+        renderTracks();
+      }
     }
 
     function clearHistory() {
@@ -814,7 +828,6 @@
           }
         } else {
           if (Math.abs(diffX) > 50) {
-            if (tracks[currentTrackIndex].category === 'companions') return;
             if (diffX > 0) {
               prevTrack();
             } else {
@@ -1134,7 +1147,7 @@
           }
         } else if(data.type === 'sync_action') {
           if(data.action === 'play') { audio.play(); isPlaying = true; }
-          if(data.action === `pause`) { audio.pause(); isPlaying = false; }
+          if(data.action === 'pause') { audio.pause(); isPlaying = false; }
           updatePlayButtons();
         }
       });
